@@ -205,9 +205,20 @@ later evidence; UNKNOWN with 0 is not proof of no external effect.
 
 Owned launch uses a fresh private profile and parent-owned Chrome process group
 on Darwin/Linux. Endpoint ownership terminates the SDK client only; the browser,
-tabs and profile remain borrowed. Owned Aside joins its actual CLI clients.
+tabs and profile remain borrowed. Owned Aside uses persistent official MCP CLI
+sessions: one control session and an independent installation-bound event reader
+per pending job. Target inspection stays live and typed without repeated snapshots.
+Readers have an 85-second observation lease and a 95-second RPC deadline; initial
+acquisition is bounded to 30 seconds and ordinary operations to five seconds.
+Loss never reconnects or retries. Owned Aside joins its actual CLI processes.
 Close/cancel can preempt a stuck status request, cancel future host callbacks,
 join started operations and retain final statuses for post-close reads.
+
+`JobEngine.subscribe(listener)` returns an unsubscribe function. It emits changes
+to retained state/count, host execution metadata or timing evidence, omitting page
+messages and timestamp-only duplicates. Foreground CLI subscribes before creation
+and waits for abort rather than status polling. Explicit status/result queries
+still reconcile nonterminal runtime state; terminal retained reads need no browser.
 
 ## Validation and errors
 
@@ -239,7 +250,9 @@ are likewise parsed at their boundary. No JSON transport envelope is invented.
 plus `JobEngine`, concrete adapters, `NodeScheduler`, `createAdapter`,
 `runBenchmark` and `createMcpServer`. Package `flashact@0.1.0` exports
 `dist/index.js` with declarations at `dist/index.d.ts`. The implemented
-`flashact` bin is `dist/cli/index.js`; `prepack` compiles it before packaging.
+`fa` bin is `dist/cli/index.js`; help uses program name `fa`, and current
+commands use `fa --<command>`. The npm package name stays `flashact`, and MCP
+tool names stay `flashact_*`. `prepack` compiles the CLI before packaging.
 
 - `npm install`: install the pinned dependencies and generate the npm lockfile.
 - `npm run build`: compile source with `tsc` (no browser bundle).

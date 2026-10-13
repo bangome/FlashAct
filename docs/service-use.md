@@ -13,7 +13,7 @@ Then run:
 ```sh
 URL='http://127.0.0.1:3000/local.html?ready=1'
 AT="$(node -e 'process.stdout.write(new Date(Date.now()+15000).toISOString())')"
-node dist/cli/index.js schedule --launch --headless \
+node dist/cli/index.js --schedule --launch --headless \
   --url "$URL" --approved-url "$URL" --selector '#reserve' \
   --action click --at "$AT" --scheduling auto
 ```
@@ -26,9 +26,16 @@ verification; check the authoritative application receipt separately.
 Keep the process alive through verification. Ctrl-C joins owned work, closes a
 launched browser and removes control metadata. Endpoint attachment never closes
 the borrowed browser/tab/profile. Action commands remain foreground after
-terminal results; `flashact status`, `cancel JOB_ID`, and `logs` use the same
-private control home. MCP is `flashact mcp`; EOF and signals trigger cleanup,
+terminal results; `fa --status`, `fa --cancel JOB_ID`, and `fa --logs` use the same
+private control home. MCP is `fa --mcp`; EOF and signals trigger cleanup,
 with protocol-only stdout and final shutdown status on stderr.
+
+Owned Aside now keeps official MCP sessions alive. Discover the target with a
+snapshot once, then reuse `fa --mcp` for typed live inspection and plan operations
+rather than repeatedly starting one-shot inspection commands. Foreground action
+output is driven by runtime changes, not a 100-ms polling loop. Waiting reads use
+independent sessions so cancel/control remains usable. See
+[read and confirmation measurements](read-confirmation.md).
 
 ## Policy and recovery
 
@@ -47,7 +54,7 @@ Reconcile actual application effects manually before any new action.
 
 Abrupt process kill, machine sleep, untested platforms and arbitrary sites have
 no cleanup or latency guarantee. Owned launch currently requires Darwin/Linux;
-live Aside was not rerun for this service change.
+current live Aside evidence below covers only authored localhost fixtures.
 
 ## Current acceptance evidence
 

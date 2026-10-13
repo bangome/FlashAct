@@ -42,14 +42,18 @@ node dist/cli/index.js --help
 node dist/cli/index.js --version
 ```
 
+The program help name is `fa`; current commands use `fa --<command>`. The
+legacy `flashact` bin and bare subcommands remain supported. The npm package
+name stays `flashact`, and MCP tool names stay `flashact_*`.
+
 Pack and test installation locally; **do not publish**:
 
 ```sh
 mkdir -p candidate-package
 npm pack --pack-destination candidate-package
 npm install --prefix candidate-install ./candidate-package/flashact-0.1.0.tgz
-./candidate-install/node_modules/.bin/flashact --help
-./candidate-install/node_modules/.bin/flashact --version
+./candidate-install/node_modules/.bin/fa --help
+./candidate-install/node_modules/.bin/fa --version
 ```
 
 Use fresh candidate directories and the filename printed by npm pack; preserve
@@ -65,12 +69,12 @@ These POSIX-shell examples use only the authored local fixture: `#reserve` is a 
 node scripts/serve-fixture.mjs 3000
 ```
 
-The script serves `http://127.0.0.1:3000/local.html`; if port 3000 is occupied, choose another port and use its printed URL. From an installed package, invoke the shipped script by its package path. In **terminal B**, after the local install above (or replace `flashact` with `node dist/cli/index.js`):
+The script serves `http://127.0.0.1:3000/local.html`; if port 3000 is occupied, choose another port and use its printed URL. From an installed package, invoke the shipped script by its package path. In **terminal B**, after the local install above (or invoke the built CLI as `node dist/cli/index.js --schedule`):
 
 ```sh
 URL='http://127.0.0.1:3000/local.html?ready=1'
 AT="$(node -e 'process.stdout.write(new Date(Date.now()+15000).toISOString())')"
-flashact schedule --launch --headless --url "$URL" --approved-url "$URL" \
+fa --schedule --launch --headless --url "$URL" --approved-url "$URL" \
   --at "$AT" --selector '#reserve' --action click
 ```
 
@@ -78,56 +82,62 @@ flashact schedule --launch --headless --url "$URL" --approved-url "$URL" \
 
 ```sh
 URL='http://127.0.0.1:3000/local.html?enableAfter=5000'
-flashact watch --launch --headless --url "$URL" --approved-url "$URL" \
+fa --watch --launch --headless --url "$URL" --approved-url "$URL" \
   --selector '#reserve' --action click --when '#reserve:enabled'
 ```
 
-`?enableAfter=5000` lets the page's authored timer enable the button after five seconds; no console injection is needed. `enableAfter` accepts decimal integers from 0 to 60000; without a valid activation query the button stays disabled. After its terminal status, stop watch with Ctrl-C; then stop the fixture in terminal A. For combined execution, `arm` requires both `--at "$AT"` and `--when '#reserve:enabled'`, plus the same launch/URL/approval/selector/action flags, and evaluates them with AND.
+`?enableAfter=5000` lets the page's authored timer enable the button after five seconds; no console injection is needed. `enableAfter` accepts decimal integers from 0 to 60000; without a valid activation query the button stays disabled. After its terminal status, stop watch with Ctrl-C; then stop the fixture in terminal A. For combined execution, `--arm` requires both `--at "$AT"` and `--when '#reserve:enabled'`, plus the same launch/URL/approval/selector/action flags, and evaluates them with AND.
 
 While an action owner runs, **terminal C** can query or cancel it:
 
 ```sh
-flashact status
-flashact status JOB_ID
-flashact logs
-flashact cancel JOB_ID
+fa --status
+fa --status JOB_ID
+fa --logs
+fa --cancel JOB_ID
 ```
 
 Replace `JOB_ID` with emitted output and use the same `FLASHACT_HOME`. Cancellation is not an undo operation. Add `--verify-selector <css> --verify-timeout-ms 5000` for meaningful post-action evidence; when omitted, `VERIFIED` certifies only local synthetic dispatch.
 
 ## CLI command reference
 
-`doctor`, `connect`, `tabs`, `inspect`, `schedule`, `watch`, and `arm` share `--backend <backend>` (default `playwright`), `--tab <id>`, `--url <url>`, `--endpoint <endpoint>`, `--launch`, and `--headless`. Aside rejects launch/headless and requires an explicit existing tab for inspection/execution. For each command, consult its implemented help before use:
+`--doctor`, `--connect`, `--tabs`, `--inspect`, `--schedule`, `--watch`, and `--arm` share `--backend <backend>` (default `playwright`), `--tab <id>`, `--url <url>`, `--endpoint <endpoint>`, `--launch`, and `--headless`. Aside rejects launch/headless and requires an explicit existing tab for inspection/execution. For each command, consult its implemented help before use:
 
 | Help invocation | Source-defined syntax and behavior |
 | --- | --- |
-| `flashact --help` | List actual commands and global options. |
-| `flashact --version` | Report package version. |
-| `flashact doctor --help` | Reports Node/OS/package/Aside diagnostics; currently probes Aside regardless of selected backend. |
-| `flashact connect --help` | Connect, print tabs, and disconnect; not a durable session. |
-| `flashact tabs --help` | Connect, enumerate tab IDs, and disconnect. |
-| `flashact inspect --help` | Requires `--selector <selector>`; inspect the selected exact tab. |
-| `flashact schedule --help` | Requires `--at <time>`, `--approved-url <url>`, `--action click`, and a target selector. Immediately validates/arms; stays foreground. |
-| `flashact watch --help` | Requires `--when <condition>`, `--approved-url <url>`, `--action click`, and a target selector. Immediately validates/arms; stays foreground. |
-| `flashact arm --help` | Requires both `--at <time>` and `--when <condition>` plus approval/action/selector; combines them with AND. Not a JSON file loader. |
-| `flashact status --help` | `status [jobId]`; queries all jobs if omitted. |
-| `flashact cancel --help` | `cancel <jobId>`; request cancellation before dispatch. |
-| `flashact logs --help` | `logs`; read bounded lifecycle logs. |
-| `flashact benchmark --help` | `--iterations <count>` (default 10), `--backend <backend>` (playwright), `--mode <mode>` (browser/node/cdp, default browser), `--output <path>`, `--tab <id>`. |
-| `flashact mcp --help` | Stdio server; `--launch`, `--headless`, `--url <url>` or `--endpoint <endpoint>` configure Playwright only. |
+| `fa --help` | List actual commands and global options. |
+| `fa --version` | Report package version. |
+| `fa --doctor --help` | Reports Node/OS/package/Aside diagnostics; currently probes Aside regardless of selected backend. |
+| `fa --connect --help` | Connect, print tabs, and disconnect; not a durable session. |
+| `fa --tabs --help` | Connect, enumerate tab IDs, and disconnect. |
+| `fa --inspect --help` | Requires `--selector <selector>`; inspect the selected exact tab. |
+| `fa --schedule --help` | Requires `--at <time>`, `--approved-url <url>`, `--action click`, and a target selector. Immediately validates/arms; stays foreground. |
+| `fa --watch --help` | Requires `--when <condition>`, `--approved-url <url>`, `--action click`, and a target selector. Immediately validates/arms; stays foreground. |
+| `fa --arm --help` | Requires both `--at <time>` and `--when <condition>` plus approval/action/selector; combines them with AND. Not a JSON file loader. |
+| `fa --status --help` | `--status [jobId]`; queries all jobs if omitted. |
+| `fa --cancel --help` | `--cancel <jobId>`; request cancellation before dispatch. |
+| `fa --logs --help` | `--logs`; read bounded lifecycle logs. |
+| `fa --benchmark --help` | `--iterations <count>` (default 10), `--backend <backend>` (playwright), `--mode <mode>` (browser/node/cdp, default browser), `--output <path>`, `--tab <id>`. |
+| `fa --mcp --help` | Stdio server; `--launch`, `--headless`, `--url <url>` or `--endpoint <endpoint>` configure Playwright only. |
 
 Action commands accept `--scheduling auto|browser|host` (default `auto`), `--verify-selector <css>` and `--verify-timeout-ms <integer>` (default 5000), plus selector, irreversible approval, timezone, attribute/value and foreground flags. Conditions are enabled/appear/visible/attribute/text; selector shorthand is supported. `--at` accepts wall-clock time or explicit-offset ISO. Scheduled plans expire 60 seconds after their deadline and reactive plans after 24 hours. There is no JSON-plan loader, expiry or watch-root flag; MCP accepts full plans.
 
 `connect` and `tabs` do not share a persistent connection with later invocations. Prefer CDP attachment with the stable tab ID returned by `tabs` when using separate commands; launch-local IDs are not reusable across processes. `status`, `cancel`, and `logs` use authenticated localhost control in `src/cli/ipc.ts`.
 
+For repeated Aside preparation, reuse `fa --mcp`: its owned control connection
+keeps the official Aside MCP process alive and reads live typed target state
+without repeated snapshots. Foreground actions publish runtime changes instead
+of polling every 100 ms; waiting readers do not block cancellation.
+See [read and confirmation evidence](docs/read-confirmation.md).
+
 After approving a harmless local fixture, these source-matched examples show the syntax (replace the endpoint/tab/URL/time):
 
 ```sh
-flashact tabs --backend playwright --endpoint http://127.0.0.1:9222
-flashact inspect --endpoint http://127.0.0.1:9222 --tab APPROVED_TAB_ID --selector '#reserve'
+fa --tabs --backend playwright --endpoint http://127.0.0.1:9222
+fa --inspect --endpoint http://127.0.0.1:9222 --tab APPROVED_TAB_ID --selector '#reserve'
 ```
 
-Run only one action owner per control home. In a second terminal use `flashact status`, `flashact logs`, or `flashact cancel JOB_ID` with the emitted job ID. Action commands stay alive **even after a terminal result** until SIGINT/SIGTERM; stop them explicitly when finished. These are syntax examples, not commands executed by this documentation task.
+Run only one action owner per control home. In a second terminal use `fa --status`, `fa --logs`, or `fa --cancel JOB_ID` with the emitted job ID. Action commands stay alive **even after a terminal result** until SIGINT/SIGTERM; stop them explicitly when finished. These are syntax examples, not commands executed by this documentation task.
 
 ## Safe execution workflow
 
@@ -190,9 +200,9 @@ Native hidden comparison and method are recorded in
 The integrated Aside adapter uses official capabilities in separate discovery and attachment steps: `listBrowserTabs()` → approved exact target ID → `attachBrowserTab(targetId)` → `page.evaluate(...)`. Do not copy profiles, guess private CDP endpoints, or replace Aside with Playwright. Keep an ordinary, operator-opened Aside UI tab alive; the adapter attaches rather than owning a new tab. `AsideAdapter` rejects `options.url`, endpoint, launch, and userDataDir because a one-shot `openTab` tab can disappear with its owner. CLI `--url` for Aside is a target URL filter/plan value, not permission to create or navigate a tab; `--tab` is mandatory for inspection/execution.
 
 ```sh
-flashact tabs --backend aside
-flashact inspect --backend aside --tab APPROVED_ASIDE_TAB_ID --selector '#reserve'
-flashact watch --backend aside --tab APPROVED_ASIDE_TAB_ID \
+fa --tabs --backend aside
+fa --inspect --backend aside --tab APPROVED_ASIDE_TAB_ID --selector '#reserve'
+fa --watch --backend aside --tab APPROVED_ASIDE_TAB_ID \
   --approved-url 'http://127.0.0.1:3000/local.html?enableAfter=5000' \
   --selector '#reserve' --action click --when '#reserve:enabled'
 ```
@@ -203,20 +213,20 @@ The independently owned [Aside integration report](docs/aside-integration.md) do
 
 ## MCP configuration
 
-The required launch target is **`flashact mcp`**, not an invented server executable:
+The required launch target is **`fa --mcp`**, not an invented server executable:
 
 ```json
 {
   "mcpServers": {
     "flashact": {
-      "command": "flashact",
-      "args": ["mcp", "--launch", "--headless", "--url", "http://127.0.0.1:3000/local.html?ready=1"]
+      "command": "fa",
+      "args": ["--mcp", "--launch", "--headless", "--url", "http://127.0.0.1:3000/local.html?ready=1"]
     }
   }
 }
 ```
 
-Start the local fixture first and ensure the locally installed executable is on the MCP client's PATH. This configuration launches only a task-owned Playwright browser/page; it does not arm a job. For approved Playwright CDP attachment replace the args with `["mcp", "--endpoint", "http://127.0.0.1:9222"]`; do not also pass `--launch` or `--url`. `--url` requires `--launch`, and launch/endpoint are mutually exclusive. For Aside-only use `["mcp"]`, select `backend: "aside"` in tools, and provide an existing approved tab ID in the plan. Playwright options are scoped by backend and do not leak into Aside. Exact ten tools (also enumerated by the coordinator's actual MCP check):
+Start the local fixture first and ensure the locally installed executable is on the MCP client's PATH. This configuration launches only a task-owned Playwright browser/page; it does not arm a job. For approved Playwright CDP attachment replace the args with `["--mcp", "--endpoint", "http://127.0.0.1:9222"]`; do not also pass `--launch` or `--url`. `--url` requires `--launch`, and launch/endpoint are mutually exclusive. For Aside-only use `["--mcp"]`, select `backend: "aside"` in tools, and provide an existing approved tab ID in the plan. Playwright options are scoped by backend and do not leak into Aside. Exact ten tools (also enumerated by the coordinator's actual MCP check):
 
 | Tool | Input |
 | --- | --- |
