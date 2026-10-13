@@ -12,6 +12,7 @@
     }
   },
   "bin": {
+    "fa": "dist/cli/index.js",
     "flashact": "dist/cli/index.js"
   },
   "files": ["dist", "README.md", "CONTRACTS.md", "docs", "examples", "scripts/serve-fixture.mjs"],

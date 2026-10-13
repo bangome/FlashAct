@@ -1,10 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdtemp, realpath, rm } from 'node:fs/promises';
+import { access, mkdtemp, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { z } from 'zod';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 
 const exec = promisify(execFile);
 
@@ -22,13 +24,45 @@ describe.skipIf(process.platform === 'win32')('npm-installed symlink entrypoint'
 
   it('prints help when invoked through the installed bin symlink and temporary-directory alias', async () => {
     // Given
-    const bin = join(prefix, 'node_modules', '.bin', 'flashact');
+    const bin = join(prefix, 'node_modules', '.bin', 'fa');
     const canonical = await realpath(bin);
     expect(canonical).not.toBe(bin);
     // When
     const result = await exec(bin, ['--help'], { cwd: prefix });
     // Then
-    expect(result.stdout).toMatch(/^Usage: flashact/m); expect(result.stderr).toBe('');
+    expect(result.stdout).toMatch(/^Usage: fa/m); expect(result.stderr).toBe('');
+  });
+  it('accepts a dashed command through the installed fa entrypoint', async () => {
+    // Given
+    const bin = join(prefix, 'node_modules', '.bin', 'fa');
+    // When
+    const result = await exec(bin, ['--tabs', '--help'], { cwd: prefix });
+    // Then
+    expect(result.stdout).toMatch(/^Usage: fa --tabs/m); expect(result.stderr).toBe('');
+  });
+  it('keeps the original flashact executable available', async () => {
+    // Given
+    const bin = join(prefix, 'node_modules', '.bin', 'flashact');
+    // When
+    const result = await exec(bin, ['--version'], { cwd: prefix });
+    // Then
+    expect(result.stdout.trim()).toBe('0.1.0'); expect(result.stderr).toBe('');
+  });
+  it('serves MCP through installed fa --mcp from an unrelated working directory', async () => {
+    // Given
+    const home = join(prefix, 'mcp-home');
+    const transport = new StdioClientTransport({ command: join(prefix, 'node_modules', '.bin', 'fa'),
+      args: ['--mcp'], cwd: prefix, env: { ...process.env, FLASHACT_HOME: home }, stderr: 'pipe' });
+    const client = new Client({ name: 'installed-fa', version: '1' });
+    try {
+      await client.connect(transport);
+      // When
+      const tools = await client.listTools();
+      // Then
+      expect(tools.tools).toHaveLength(10);
+      await client.close();
+      await expect(access(join(home, 'engine.json'))).rejects.toMatchObject({ code: 'ENOENT' });
+    } finally { await client.close(); }
   });
   it('prints the version when invoked via the installed direct path', async () => {
     // Given

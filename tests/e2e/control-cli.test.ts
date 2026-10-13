@@ -55,7 +55,7 @@ describe('compiled CLI surfaces', () => {
     const address = fixture.address();
     if (!address || typeof address === 'string') throw new Error('Fixture has no listener');
     const url = `http://127.0.0.1:${address.port}/`;
-    const service = serviceChild(['watch', '--launch', '--headless', '--url', url, '--approved-url', url,
+    const service = serviceChild(['--watch', '--launch', '--headless', '--url', url, '--approved-url', url,
       '--selector', '#reserve', '--when', 'enabled', '--action', 'click', '--scheduling', 'host',
       '--verify-selector', '#receipt', '--verify-timeout-ms', '3000'], home);
     try {
@@ -144,7 +144,7 @@ describe('compiled CLI surfaces', () => {
   it('serves all ten MCP tools on protocol-only stdout and closes on EOF', async () => {
     // Given
     const home = await mkdtemp(join(tmpdir(), 'flashact-mcp-'));
-    const transport = new StdioClientTransport({ command: process.execPath, args: [cli, 'mcp'], env: { ...process.env, FLASHACT_HOME: home }, stderr: 'pipe' });
+    const transport = new StdioClientTransport({ command: process.execPath, args: [cli, '--mcp'], env: { ...process.env, FLASHACT_HOME: home }, stderr: 'pipe' });
     const client = new Client({ name: 'e2e', version: '1' });
     try {
       await client.connect(transport);
@@ -166,14 +166,14 @@ describe('compiled CLI surfaces', () => {
     if (!address || typeof address === 'string') throw new Error('Fixture has no port');
     const url = `http://127.0.0.1:${address.port}/`;
     const env = { ...process.env, FLASHACT_HOME: home };
-    const child = spawn(process.execPath, [cli, 'watch', '--launch', '--headless', '--url', url,
+    const child = spawn(process.execPath, [cli, '--watch', '--launch', '--headless', '--url', url,
       '--approved-url', url, '--selector', '#reserve', '--when', 'enabled', '--action', 'click',
       '--scheduling', 'browser'], { env });
     try {
       const id = await ready(child);
       // When
-      await exec(process.execPath, [cli, 'cancel', id], { env });
-      const result = await exec(process.execPath, [cli, 'status', id], { env });
+      await exec(process.execPath, [cli, '--cancel', id], { env });
+      const result = await exec(process.execPath, [cli, '--status', id], { env });
       const decoded: unknown = JSON.parse(result.stdout);
       const exit = once(child, 'exit'); child.kill('SIGTERM'); await exit;
       // Then
