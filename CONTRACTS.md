@@ -76,6 +76,7 @@ type JobStatus = {
   executions: number;
   message?: string;
   timing?: JobTiming;
+  execution?: ExecutionInfo;
   updatedAt: number;
 };
 type RuntimeHandle = { jobId: string; documentId: string };
@@ -103,6 +104,7 @@ All operations are asynchronous; implementors must use these signatures:
 
 ```ts
 interface BrowserAdapter {
+  readonly owner?: AdapterOwner;
   connect(): Promise<void>;
   listTabs(): Promise<readonly BrowserTab[]>;
   selectTab(tabId: string): Promise<void>;
@@ -142,8 +144,8 @@ install, arm, force a trigger, click directly, or promise eventual verification.
 An unarmed job is unchanged; a terminal or dispatched job cannot execute again.
 The runtime retains its browser clock, URL, cached-target/removal, enabled,
 visible, irreversible approval, expiry, and single-shot checks. Browser timers
-and reactive observers continue to operate. No new plan field or default
-engine/CLI/MCP scheduler is introduced. The interface capability is optional;
+and reactive observers continue to operate. No plan field changes; CLI/MCP now
+default to owned transport and auto scheduling. The interface capability is optional;
 Aside does not expose it as an adapter method.
 
 The Playwright control command binds the installation token, runtime object and
@@ -162,10 +164,50 @@ Cancel all future host callbacks before cancellation/shutdown, then join started
 operations through the caller's actual transport/worker ownership boundary.
 Cancelling a timer cannot retract a sent RPC; a timeout or racing waiter is not
 producer termination. The benchmark's owned SDK worker supplies termination and
-join; a borrowed production page does not imply cancellable `page.evaluate` or
+join; a direct borrowed SDK page does not imply cancellable `page.evaluate` or
 bounded shutdown. Host/browser epoch disagreement can lose acceleration, never
 bypass browser readiness. For AND/OR plans schedule distinct leaf deadlines,
 not merely the maximum timing field.
+
+### Owned engine and execution provenance
+
+`EngineOptions.adapterMode` is `direct | owned`; `scheduling` is
+`browser | auto | host`. SDK defaults remain direct/browser; CLI and stdio MCP
+choose owned/auto. Auto uses host assistance only with owned wake-capable
+transport and scheduled leaves. Explicit host rejects unsupported transports.
+Auto reactive-only plans use browser scheduling. Distinct nested scheduled leaves,
+past deadlines and expiry are bounded/deduplicated; the browser remains the
+only dispatch authority.
+
+```ts
+type ExecutionInfo = {
+  requested: "browser" | "auto" | "host";
+  scheduler: "browser" | "host-assisted";
+  transport: "direct" | "owned-worker" | "owned-aside-cli";
+  browserOwnership: "owned" | "borrowed";
+  reason: "explicit-browser" | "explicit-host" | "scheduled-leaves"
+    | "no-scheduled-leaves" | "unsupported-host-wake" | "cooperative-transport";
+};
+interface AdapterOwner {
+  readonly kind: "launched-browser" | "endpoint-client" | "aside-client";
+  subscribe(listener: (status: JobStatus) => void): () => void;
+  stop(reason: "shutdown" | "deadline" | "cancel"): Promise<readonly JobStatus[]>;
+}
+```
+
+Execution provenance is optional, strictly parsed and host-authoritative. It
+does not change plan version or timing meanings. `owner.stop` seals admission
+synchronously and resolves only after producer exit/join, not a raced timeout.
+Playwright startup/RPC/cancel-shutdown deadlines are 30 s/5 s/2 s. Loss poisons
+the connection, can affect its other jobs, and never reconnects or retries.
+Armed uncertain jobs retain UNKNOWN and their last observed 0/1 count even after
+later evidence; UNKNOWN with 0 is not proof of no external effect.
+
+Owned launch uses a fresh private profile and parent-owned Chrome process group
+on Darwin/Linux. Endpoint ownership terminates the SDK client only; the browser,
+tabs and profile remain borrowed. Owned Aside joins its actual CLI clients.
+Close/cancel can preempt a stuck status request, cancel future host callbacks,
+join started operations and retain final statuses for post-close reads.
 
 ## Validation and errors
 

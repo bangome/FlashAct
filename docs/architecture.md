@@ -28,19 +28,34 @@ Validation bounds trigger parsing itself to depth 8 and 1–32 composite childre
 
 ## Host engine and control plane
 
-`src/core/engine.ts` serializes host operations through a promise queue. `createJob` establishes `DRAFT`; `validateJob` checks expiry and live target guards before `VALIDATED`; `armJob` rechecks immediately before installing and arming the runtime. An absent target is allowed only where the engine's appearance-trigger rules permit it. Multiple target matches or an unapproved irreversible action reject validation. Arming acknowledgement is not action verification.
+`src/core/engine.ts` serializes create/validate/arm admission, while coalesced status reads, cancellation, host wakes and close operate outside that queue. Validation and arm both check live guards. Installed browser runtime retains dispatch authority; a wake cannot force execution.
 
 Jobs and lifecycle logs are in-memory. Logs retain at most 1,000 entries; state-transition entries deliberately omit free-form runtime messages that might contain page data. `getStatus` queries installed nonterminal jobs and validates returned statuses and job IDs. `close` attempts to cancel nonterminal installed jobs, then disconnects adapters. An acknowledgement failure after installation triggers a cancellation attempt; it cannot prove no click occurred.
 
-`src/cli/ipc.ts` implements cross-process **control**, not a background service. A foreground owner binds HTTP to `127.0.0.1` on an ephemeral port. It accepts `GET /status` (optional `jobId`), `GET /logs`, and `POST /cancel` (required `jobId`). The metadata file contains a cryptographically random 32-byte bearer token encoded as 64 hex characters; authorization uses constant-time comparison and loopback peer checking. Clients read owner-only metadata, authenticate requests, use a five-second timeout, and cap responses at 1 MiB.
+`src/cli/ipc.ts` implements authenticated loopback control, not a daemon. GET /status and /logs and POST /cancel require the private engine.json bearer token. Clients have a ten-second deadline and 1 MiB response cap. Shutdown seals admission, joins active handlers and sockets, closes the listener, then unlinks metadata.
 
 `FLASHACT_HOME` overrides `~/.flashact`. Exclusive creation of `engine.json` prevents two owners claiming the same home. Normal close removes metadata; stale metadata after a crash requires manual reconciliation. POSIX ownership/mode checks and symlink rejection protect metadata; Windows has a PowerShell ACL creation path, **not a tested Windows guarantee**. A local process with the user's privileges can read credentials; this is not a hostile-same-user sandbox.
 
-`src/cli/foreground.ts` creates/validates/arms one generated plan, polls status every 100 ms, and remains alive even after terminal results until SIGINT/SIGTERM. Cleanup closes the engine and control server. `connect`, `tabs`, and `inspect` instead use a short-lived engine and disconnect on completion. Schedule/watch/arm construct plans from flags; they do not load JSON files and currently omit a verification selector. `arm` combines time and event conditions with AND. Stop schedule before watch when sharing a control home.
+`src/cli/foreground.ts` creates/validates/arms generated plans and polls status every 100 ms. It remains foreground until SIGINT/SIGTERM even after a terminal result. Signal handling starts before adapter acquisition, seals engine admission and joins owned producers. Action flags support verification selector/timeout and scheduling; no JSON loader is present. Final retained statuses are emitted after cleanup.
 
 MCP registers the ten tools listed in README, including full-plan create/validate/arm, and closes on stdio EOF, server close, or signals. `mcp --launch --headless --url <local-url>` configures a task-owned Playwright page; `mcp --endpoint <endpoint>` attaches explicitly instead. URL requires launch; endpoint and launch are mutually exclusive. `EngineOptions.adapterOptionsByBackend` isolates these Playwright options from Aside. Aside-only stdio can start with `mcp` and use tool backend `aside`, with exact existing tab IDs in plans. There is no connect tool. There is no durable job database, automatic restart, service manager, or daemon-lifetime promise. SIGKILL or abrupt termination cannot guarantee cancellation, disconnection, or metadata cleanup. Page work surviving a client is not supported recovery or proof that cancellation succeeded.
 
 ## Adapter boundary
+
+CLI/MCP use `createOwnedAdapter`; direct SDK construction remains cooperative.
+Owned Playwright uses the emitted package-relative `worker.js` for public SDK
+calls. The parent separately owns launched Chrome, its private temporary profile
+and process group; an endpoint instead borrows the browser. Stock Chrome flags
+do not disable background throttling. Producer exit rejects outstanding RPCs;
+shutdown seals new requests before termination and joins acquisition, worker,
+Chrome and owned directories. A lost connection is not reopened.
+
+Host scheduling adds wake requests at distinct nested leaves and expiry, while
+the document keeps its timers/observers and final guard checks. Status
+observations reach retained state independently of command replies. Uncertain
+armed outcomes become UNKNOWN with last observed count; late evidence never
+revives a job. Scheduling provenance is immutable host metadata, not browser
+input. `browser` scheduling still uses owned CLI/MCP transport.
 
 The shared `BrowserAdapter` contract provides `connect`, `listTabs`, `selectTab`, `inspectTarget`, `installRuntime`, `arm`, `cancel`, `getStatus`, `evaluate`, and `disconnect`. Constructor options configure connections; `connect()` takes no arguments. Generic evaluation returns `unknown`. Runtime commands return JSON strings that the bridge decodes and validates with shared schemas.
 
@@ -71,7 +86,7 @@ The latter six are terminal at the host level. Do not assume every transition is
 
 ## Timing and evidence
 
-`NodeScheduler` is an independent host scheduler interface, not the owner of browser trigger dispatch. It chunks long delays to the platform timer limit and rechecks wall time after waking. Browser timing fields include target, scheduler, received, observer, condition, and click epoch measurements; browser high-resolution timestamps may be fractional. Process-local monotonic clocks are not comparable across processes without calibration.
+`NodeScheduler` requests readiness at every distinct nested scheduled leaf (including the earlier OR leaf) and expiry; it never owns browser dispatch. Past deadlines are deduplicated. Browser checks still require both page-derived epoch and wall time. Timing fields retain their original meanings; `execution` separately records scheduling and transport provenance.
 
 The [benchmark report](benchmark-results.md) distinguishes runtime, NodeScheduler/page-evaluate, and public Playwright CDP baselines. No public Aside CDP endpoint was established. The raw `node-timer.json` is separate `setTimeout` evidence, not NodeScheduler performance. Short 12 ms scheduled deadlines in one official Aside REPL session yielded scheduled p99 2.4 ms and reactive p99 0.5 ms over 1,000 trials. The [initial multi-command timings](../artifacts/qa/aside-initial-timing.json) recorded an 8-second scheduled click 365.7 ms late and AND 285.2 ms late (reactive 0.9 ms, OR 0.5 ms); subsequent integration runs have their own recorded samples. These different session/horizon measurements must not be merged or used as an SLA. Aside CPU contention p99 was 53.4 ms over 20 trials, missing a 50 ms goal.
 

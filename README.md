@@ -6,17 +6,22 @@ Single-shot browser DOM clicks triggered by a scheduled instant, an element cond
 
 ## Repository readiness
 
-The integrated MVP includes the browser runtime, Playwright and Aside adapters, foreground CLI, authenticated local control, benchmarks, and a ten-tool MCP server. Build and strict typecheck passed; the full macOS suite, including live Aside integration, passed **293 tests across 27 files**. The packed tarball was installed into an isolated npm prefix and exercised through its actual bin link: schedule, watch, composite execution, cross-process status/cancel, and MCP each produced independently observed local clicks. See [manual CLI/MCP evidence](artifacts/qa/manual-cli.json), [lost-acknowledgement evidence](artifacts/qa/lost-ack-after.json), and the [approved independent review](artifacts/qa/gate-review-final.json). These results do not imply real-site acceptance, a latency SLA, or verified Windows support.
+The local service build includes owned adapter lifetimes and guarded host scheduling for CLI/MCP. On October 13, 2026, actual hidden CLI and stdio MCP each passed 20 authored localhost HTTP-acknowledged actions, with no early or duplicate request. Their means were 4.81 ms and 6.05 ms with five-second scheduling lead. These are measured populations, not a real-site or latency guarantee. Historical live Aside and packed MVP evidence remains under `artifacts/qa`; current service evidence is under `.omo/evidence/service-use-20261013`.
 
 ## Install and build locally
 
-Latest local verification (2026-10-13): the unchanged default parallel test
+Historical baseline verification (2026-10-13): the unchanged default parallel test
 configuration passed **435 tests across 34 files**, with six existing opt-in
 live Aside cases skipped, and strict typecheck passed. Clock-sensitive test
 setup and current-runtime stop-test preconditions were stabilized without
 changing product behavior or historical evidence. See
 [parallel stabilization evidence](.omo/evidence/parallel-stabilization-checks.md).
 This does not repeat the earlier packed-install or live Aside certification.
+
+Current service build verification: strict typecheck/build and the normal
+parallel suite passed **518 tests**, with the same six opt-in live Aside skips.
+Actual CLI/MCP hidden populations, lifecycle faults and fresh installed-package
+checks are described in [service use](docs/service-use.md).
 
 Use Node **>=22.12.0 and <23**, npm >=10 (the package pins npm 10.9.7). From the repository directory:
 
@@ -28,7 +33,7 @@ npm run typecheck
 npm test
 ```
 
-The tested environment is Node v22.22.2 / npm 10.9.7 on macOS. The default test run excludes the opt-in live Aside suite. With the official Aside CLI installed and its browser running, run `FLASHACT_ASIDE_INTEGRATION=1 npm test` to include all 293 tests. Live integration tests create and close only their own localhost fixture tabs.
+The tested environment is Node v22.22.2 on macOS. The default suite skips six opt-in live Aside cases. With the official Aside CLI/browser running, `FLASHACT_ASIDE_INTEGRATION=1 npm test` includes those cases; this service acceptance did not rerun live Aside.
 
 After a successful build with a CLI entry point, inspect the local build rather than fetching a published package:
 
@@ -40,14 +45,17 @@ node dist/cli/index.js --version
 Pack and test installation locally; **do not publish**:
 
 ```sh
-npm pack --dry-run
-npm pack
-npm install --global ./flashact-0.1.0.tgz
-flashact --help
-flashact --version
+mkdir -p candidate-package
+npm pack --pack-destination candidate-package
+npm install --prefix candidate-install ./candidate-package/flashact-0.1.0.tgz
+./candidate-install/node_modules/.bin/flashact --help
+./candidate-install/node_modules/.bin/flashact --version
 ```
 
-Global installation changes the local npm environment and may require appropriate permissions. Use the filename actually returned by `npm pack` if the version changes. `prepack` runs the build; the package includes `dist`, README, CONTRACTS, docs, examples, and `scripts/serve-fixture.mjs`. Installed fixture resolution is package-relative, not dependent on the caller's cwd. Local installation, bin-link execution (including macOS temporary-directory aliases), and an installed `benchmark` invocation from another directory were verified. No npm Registry publication was performed.
+Use fresh candidate directories and the filename printed by npm pack; preserve
+older tarballs. `prepack` builds dist. The package includes dist, docs, examples
+and its fixture script. Add the candidate bin directory to PATH or use its
+absolute path from another working directory. No registry publication is needed.
 
 ## First harmless scheduled and reactive clicks
 
@@ -85,7 +93,7 @@ flashact logs
 flashact cancel JOB_ID
 ```
 
-Replace `JOB_ID` with emitted output. Use the same `FLASHACT_HOME` in both terminals if overridden. Cancellation before dispatch is not an undo operation. Generated CLI plans omit a verification selector, so their `VERIFIED` means local synthetic click evidence only. Inspect the fixture ledger/receipt for local behavior; consequential sites need meaningful independent verification.
+Replace `JOB_ID` with emitted output and use the same `FLASHACT_HOME`. Cancellation is not an undo operation. Add `--verify-selector <css> --verify-timeout-ms 5000` for meaningful post-action evidence; when omitted, `VERIFIED` certifies only local synthetic dispatch.
 
 ## CLI command reference
 
@@ -108,7 +116,7 @@ Replace `JOB_ID` with emitted output. Use the same `FLASHACT_HOME` in both termi
 | `flashact benchmark --help` | `--iterations <count>` (default 10), `--backend <backend>` (playwright), `--mode <mode>` (browser/node/cdp, default browser), `--output <path>`, `--tab <id>`. |
 | `flashact mcp --help` | Stdio server; `--launch`, `--headless`, `--url <url>` or `--endpoint <endpoint>` configure Playwright only. |
 
-Action commands also accept `--selector <selector>`, `--approve-irreversible`, `--timezone <IANA>` (UTC), `--attribute <name>`, `--value <value>`, and `--foreground` (always enabled; there is no daemon mode). Conditions are `enabled`, `appear`, `visible`, `attribute`, or `text`; `#selector:enabled`, `:appear`, and `:visible` shorthand can supply the target selector. Attribute conditions require `--attribute`. `--at` accepts `HH:mm:ss[.SSS]` or an ISO instant with an explicit offset. Scheduled plans expire 60 seconds after the deadline; event-only plans expire 24 hours after construction. Generated plans have random job IDs and no verification selector. The CLI currently exposes no `--plan`, verification-selector, expiry, or watch-root option; use MCP's full-plan input for the JSON examples and meaningful verification.
+Action commands accept `--scheduling auto|browser|host` (default `auto`), `--verify-selector <css>` and `--verify-timeout-ms <integer>` (default 5000), plus selector, irreversible approval, timezone, attribute/value and foreground flags. Conditions are enabled/appear/visible/attribute/text; selector shorthand is supported. `--at` accepts wall-clock time or explicit-offset ISO. Scheduled plans expire 60 seconds after their deadline and reactive plans after 24 hours. There is no JSON-plan loader, expiry or watch-root flag; MCP accepts full plans.
 
 `connect` and `tabs` do not share a persistent connection with later invocations. Prefer CDP attachment with the stable tab ID returned by `tabs` when using separate commands; launch-local IDs are not reusable across processes. `status`, `cancel`, and `logs` use authenticated localhost control in `src/cli/ipc.ts`.
 
@@ -143,19 +151,34 @@ These templates target the actual `examples/local.html` fixture: `#reserve`, `wa
 
 Plans use schema version `1.0`; unknown keys, nulls, and coercions are rejected. Time values are integer epoch milliseconds. `timezone` is a supported `Intl` zone label and never changes the meaning of an epoch. Triggers include `SCHEDULED`, `ELEMENT_APPEAR`, `ELEMENT_ENABLE`, `ELEMENT_VISIBLE`, `ATTRIBUTE_CHANGE`, `TEXT_CHANGE`, `AND`, and `OR`; composites have 1–32 children and a maximum depth of 8. See [CONTRACTS.md](CONTRACTS.md) and [architecture](docs/architecture.md).
 
-## Caller-owned host scheduling (opt-in SDK)
+## Scheduling and ownership
 
-The updated local build exposes `await playwrightAdapter.wake(jobId)` after an
-approved plan has been installed and armed. It asks the existing browser runtime
-to recheck readiness immediately; it does not bypass guards or synthesize a raw
-click. Repeated/early/terminal wakes cannot force execution. A host scheduler can
-call it at scheduled leaf deadlines while browser timers and observers remain
-active. This capability is not automatically enabled by `JobEngine`, CLI or MCP.
+See [local service use and recovery](docs/service-use.md) for current acceptance
+scope and the first-use workflow.
+
+CLI and MCP use owned transports and `auto` scheduling by default. Playwright
+plans containing scheduled leaves receive host readiness checks at each distinct
+leaf and expiry. Reactive-only plans keep browser scheduling. `browser` disables
+host assistance without changing ownership; `host` requires owned transport and
+wake support and rejects unsupported Aside plans. Browser guards and current
+AND/OR predicates still decide dispatch.
+
+`status.execution` records requested policy, scheduler, transport, browser
+ownership and reason. `flashact_list_backends` discovers capabilities without
+opening a browser. Aside has owned CLI clients but browser-only scheduling.
+
+SDK `new JobEngine()` and `createAdapter()` retain direct/browser defaults.
+Opt in with `new JobEngine({ adapterMode: 'owned', scheduling: 'auto',
+adapterOptionsByBackend: { playwright: { launch: true, headless: true } } })`.
+`createOwnedAdapter` is also exported. Owned launch requires Darwin or Linux,
+installed Playwright Chromium and a fresh private profile. Owned mode rejects
+borrowed page/context objects and `userDataDir`. Endpoint attachment owns its
+SDK client only, not the existing browser, tab or profile.
 
 Retain the `NodeScheduler` cancellation handle and every resulting wake promise.
 Stop future callbacks first; join started RPCs through a caller-owned termination
 boundary. A sent evaluation cannot be cancelled by its timer handle. Borrowed
-pages do not provide bounded shutdown for a permanently pending SDK evaluation.
+pages in direct SDK mode do not provide bounded shutdown for a pending evaluation.
 Use `adapter.wake` for installation binding; root-exported `wakeExpression` is
 only a low-level current-realm expression. See [contracts](CONTRACTS.md).
 
@@ -216,4 +239,4 @@ Read the [benchmark report](docs/benchmark-results.md) and [Aside probe report](
 
 The [hidden-tab attempt](artifacts/benchmark/playwright-hidden.json) is **NOT VERIFIED**: headed Chromium with another owned page brought to front still reported native visibility `visible`, timed out, and completed zero trial batches. Owned context/browser/server were closed. It is not hidden-tab latency evidence. The [raw Node timer artifact](artifacts/benchmark/node-timer.json) measures `setTimeout`, not NodeScheduler or browser dispatch. Windows, sleep/wake, and long-horizon precision remain unverified. See [limitations](docs/limitations.md).
 
-The package root exports `JobEngine`, `PlaywrightAdapter`, `AsideAdapter`, `NodeScheduler`, `createAdapter`, `runBenchmark`, and `createMcpServer`, alongside public contracts and schemas. Use `parsePlan` on decoded JSON before API execution. No publishing or commits are part of these reproduction instructions.
+The package root exports `JobEngine`, `PlaywrightAdapter`, `AsideAdapter`, `NodeScheduler`, `createAdapter`, `createOwnedAdapter`, `runBenchmark`, and `createMcpServer`, alongside contracts and schemas. Parse decoded plans with `parsePlan`. No registry publication is required.
