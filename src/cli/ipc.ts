@@ -3,6 +3,7 @@ import { createServer, request } from 'node:http';
 import { open, readFile, unlink } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import type { Socket } from 'node:net';
 import { z } from 'zod';
 import type { JobEngine } from '../core/engine.js';
 import { FlashActError } from '../utils/errors.js';
@@ -23,7 +24,12 @@ export async function startControlServer(engine: JobEngine, home = controlHome()
     throw error;
   }
   const token = randomBytes(32).toString('hex');
+  const handlers = new Set<Promise<void>>();
+  const sockets = new Set<Socket>();
+  let accepting = true;
+  let closed: Promise<void> | undefined;
   const server = createServer((req, res) => {
+    if (!accepting) { res.writeHead(503).end(); return; }
     const received = Buffer.from(req.headers.authorization ?? '');
     const expected = Buffer.from(`Bearer ${token}`);
     if (req.socket.remoteAddress !== '127.0.0.1' || received.length !== expected.length || !timingSafeEqual(received, expected)) {
@@ -43,19 +49,36 @@ export async function startControlServer(engine: JobEngine, home = controlHome()
       }
       res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }).end(JSON.stringify(result));
     };
-    void handle().catch(error => {
+    const handling = handle().catch(error => {
       // HTTP boundary returns error codes only, never adapter exception payloads.
       const code = error instanceof FlashActError ? error.code : 'INTERNAL_ERROR';
-      res.writeHead(400, { 'Content-Type': 'application/json' }).end(JSON.stringify({ error: code }));
+      if (!res.destroyed) res.writeHead(400, { 'Content-Type': 'application/json' }).end(JSON.stringify({ error: code }));
+    }).then(async () => {
+      if (res.writableFinished || res.destroyed) return;
+      await new Promise<void>(resolve => {
+        const finished = () => { res.off('finish', finished); res.off('close', finished); resolve(); };
+        res.once('finish', finished); res.once('close', finished);
+      });
     });
+    handlers.add(handling);
+    void handling.then(() => handlers.delete(handling));
+  });
+  server.on('connection', socket => {
+    sockets.add(socket);
+    socket.once('close', () => sockets.delete(socket));
   });
   server.requestTimeout = 5000; server.headersTimeout = 5000;
-  let closed: Promise<void> | undefined;
   const close = (): Promise<void> => {
+    accepting = false;
     closed ??= (async () => {
-      if (server.listening) await new Promise<void>((resolve, reject) => {
+      const listenerClosed = server.listening ? new Promise<void>((resolve, reject) => {
         server.close(error => error ? reject(error) : resolve()); server.closeIdleConnections();
-      });
+      }) : Promise.resolve();
+      await Promise.allSettled([...handlers]);
+      await Promise.all([...sockets].map(socket => new Promise<void>(resolve => {
+        socket.once('close', () => resolve()); socket.destroy();
+      })));
+      await listenerClosed;
       await lock.close();
       await unlink(path);
     })();
@@ -71,7 +94,7 @@ export async function startControlServer(engine: JobEngine, home = controlHome()
     const metadata = { port: address.port, token, pid: process.pid };
     await lock.writeFile(JSON.stringify(metadata));
     await lock.sync();
-    return { close, port: address.port };
+    return { close, stopAdmission: () => { accepting = false; }, port: address.port };
   } catch (error) { await close(); throw error; }
 }
 
@@ -84,7 +107,7 @@ export async function sendControl(input: ControlRequest, home = controlHome()): 
   const query = input.jobId ? `?jobId=${encodeURIComponent(input.jobId)}` : '';
   return new Promise((resolve, reject) => {
     const req = request({ hostname: '127.0.0.1', port: metadata.port, path: `/${input.command}${query}`,
-      method: input.command === 'cancel' ? 'POST' : 'GET', headers: { Authorization: `Bearer ${metadata.token}` }, timeout: 5000 }, res => {
+      method: input.command === 'cancel' ? 'POST' : 'GET', headers: { Authorization: `Bearer ${metadata.token}` }, timeout: 10000 }, res => {
       const chunks: Buffer[] = []; let bytes = 0;
       res.on('data', (chunk: Buffer) => {
         bytes += chunk.length;

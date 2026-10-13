@@ -13,12 +13,13 @@ async function response(action: () => Promise<unknown>) {
   }
 }
 
-export function createMcpServer(engine = new JobEngine()): McpServer {
+export function createMcpServer(engine = new JobEngine({ adapterMode: 'owned', scheduling: 'auto' })): McpServer {
   const server = new McpServer({ name: 'flashact', version: '0.1.0' });
   const backend = z.enum(['playwright', 'aside']);
   const jobId = z.string().min(1);
   server.registerTool('flashact_list_backends', { inputSchema: {} }, async () => response(async () => ({
     backends: ['playwright', 'aside'], singleShot: true, foreground: true, asideRequiresExistingTab: true,
+    capabilities: engine.capabilities(), defaultScheduling: engine.defaultScheduling,
   })));
   server.registerTool('flashact_list_tabs', { inputSchema: { backend } }, async args => response(() => engine.listTabs(args.backend)));
   server.registerTool('flashact_inspect_target', { inputSchema: { backend, tabId: z.string().min(1), selector: z.string().min(1) } },

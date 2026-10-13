@@ -1,13 +1,16 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { mkdtemp, readFile, rm, stat, chmod } from 'node:fs/promises';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { mkdtemp, readFile, rm, stat, chmod, access } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { request } from 'node:http';
+import { connect } from 'node:net';
+import { once } from 'node:events';
+import type { JobStatus } from '../../src/core/types.js';
 import { JobEngine } from '../../src/core/engine.js';
 import { sendControl, startControlServer } from '../../src/cli/ipc.js';
 
 const homes: string[] = [];
-afterEach(async () => { await Promise.all(homes.splice(0).map(home => rm(home, { recursive: true, force: true }))); });
+afterEach(async () => { vi.restoreAllMocks(); await Promise.all(homes.splice(0).map(home => rm(home, { recursive: true, force: true }))); });
 
 async function fixture() {
   const home = await mkdtemp(join(tmpdir(), 'flashact-control-')); homes.push(home);
@@ -22,6 +25,52 @@ async function fixture() {
 }
 
 describe('private loopback IPC', () => {
+  it('admits cancellation alongside a held status and drains that handler before removing its lock', async () => {
+    // Given
+    const { home, engine, control } = await fixture();
+    const getStatus = engine.getStatus.bind(engine);
+    let started: () => void = () => undefined;
+    const statusStarted = new Promise<void>(resolve => { started = resolve; });
+    let release: (status: JobStatus) => void = () => undefined;
+    const released = new Promise<JobStatus>(resolve => { release = resolve; });
+    vi.spyOn(engine, 'getStatus').mockImplementation(async () => { started(); return released; });
+    const reading = sendControl({ command: 'status', jobId: 'draft' }, home);
+    await statusStarted;
+    try {
+      // When
+      const cancelled = await sendControl({ command: 'cancel', jobId: 'draft' }, home);
+      const closing = control.close();
+      await access(join(home, 'engine.json'));
+      await expect(startControlServer(new JobEngine(), home)).rejects.toMatchObject({ code: 'INVALID_STATE' });
+      await engine.close(); release(await getStatus('draft'));
+      const status = await reading;
+      await closing;
+      // Then
+      expect(cancelled).toMatchObject({ state: 'CANCELLED' });
+      expect(status).toMatchObject({ state: 'CANCELLED' });
+      expect(control.close()).toBe(closing);
+      await expect(access(join(home, 'engine.json'))).rejects.toMatchObject({ code: 'ENOENT' });
+    } finally { release(await getStatus('draft')); await engine.close(); await control.close(); }
+  });
+  it('joins an incomplete owned HTTP socket before removing metadata', async () => {
+    // Given
+    const { home, engine, control } = await fixture();
+    const socket = connect(control.port, '127.0.0.1');
+    const errors: Error[] = [];
+    socket.on('error', error => errors.push(error));
+    const connected = once(socket, 'connect');
+    const exited = new Promise<void>(resolveExit => socket.once('close', () => resolveExit()));
+    await connected;
+    socket.write('GET /status HTTP/1.1\r\n');
+    try {
+      // When
+      await engine.close(); await control.close(); await exited;
+      // Then
+      expect(socket.destroyed).toBe(true);
+      for (const error of errors) expect(error).toMatchObject({ code: 'ECONNRESET' });
+      await expect(access(join(home, 'engine.json'))).rejects.toMatchObject({ code: 'ENOENT' });
+    } finally { socket.destroy(); await engine.close(); await control.close(); }
+  });
   it('retains status across authenticated requests when another client cancels', async () => {
     // Given
     const { home, engine, control } = await fixture();

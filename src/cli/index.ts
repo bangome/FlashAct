@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { JobEngine } from '../core/engine.js';
 import { FlashActError } from '../utils/errors.js';
 import { adapterOptions, commandPlan, connectionSchema, selectedTab } from './plan.js';
-import { foreground } from './foreground.js';
+import { foreground, runEngineLifetime } from './foreground.js';
 import { sendControl } from './ipc.js';
 import { doctor } from './doctor.js';
 import { benchmark } from './benchmark.js';
@@ -20,10 +20,11 @@ function connection(command: Command): Command {
     .option('--launch', 'explicitly launch a Playwright browser').option('--headless', 'headless launch');
 }
 
-async function usingEngine(input: unknown, action: (engine: JobEngine) => Promise<void>): Promise<void> {
-  const { backend } = connectionSchema.parse(input);
-  const engine = new JobEngine({ adapterOptionsByBackend: { [backend]: adapterOptions(input) } });
-  try { await action(engine); } finally { await engine.close(); }
+async function usingEngine(input: unknown, action: (engine: JobEngine, signal: AbortSignal) => Promise<void>): Promise<void> {
+  const { backend, scheduling } = connectionSchema.parse(input);
+  const engine = new JobEngine({ adapterMode: 'owned', scheduling,
+    adapterOptionsByBackend: { [backend]: adapterOptions(input) } });
+  await runEngineLifetime(engine, signal => action(engine, signal));
 }
 
 export function createCli(): Command {
@@ -37,7 +38,7 @@ export function createCli(): Command {
   }
   connection(program.command('inspect')).requiredOption('--selector <selector>', 'target CSS selector')
     .action(async (input: unknown) => usingEngine(input, async engine => {
-      const options = connectionSchema.extend({ selector: z.string() }).parse(input);
+      const options = connectionSchema.safeExtend({ selector: z.string() }).parse(input);
       print(await engine.inspectTarget(options.backend, await selectedTab(engine, options), options.selector));
     }));
   for (const name of ['schedule', 'watch', 'arm']) {
@@ -45,10 +46,15 @@ export function createCli(): Command {
       .requiredOption('--action <action>', 'single-shot click only').option('--selector <selector>', 'target CSS selector')
       .option('--approve-irreversible', 'explicit irreversible-action approval').option('--timezone <IANA>', 'clock timezone', 'UTC')
       .option('--attribute <name>', 'attribute to observe').option('--value <value>', 'exact attribute/text value')
+      .option('--scheduling <auto|browser|host>', 'scheduling policy (transport always owned)', 'auto')
+      .option('--verify-selector <css>', 'verification CSS selector; omitted means local-click-only verification')
+      .option('--verify-timeout-ms <integer>', 'positive safe-integer verification timeout in milliseconds', '5000')
       .option('--foreground', 'stay alive (always enabled; no daemon mode)');
     if (name !== 'watch') command.requiredOption('--at <time>', 'HH:mm:ss.SSS or offset ISO');
     if (name !== 'schedule') command.requiredOption('--when <condition>', 'enabled/appear/visible/attribute/text or #selector:enabled');
-    command.action(async (input: unknown) => usingEngine(input, async engine => { await foreground(engine, await commandPlan(engine, input)); }));
+    command.action(async (input: unknown) => usingEngine(input, async (engine, signal) => {
+      await foreground(engine, await commandPlan(engine, input), signal);
+    }));
   }
   program.command('status').argument('[jobId]').action(async (id: string | undefined) => { print(await sendControl({ command: 'status', ...(id ? { jobId: id } : {}) })); });
   program.command('cancel').argument('<jobId>').action(async (id: string) => { print(await sendControl({ command: 'cancel', jobId: id })); });
@@ -63,14 +69,13 @@ export function createCli(): Command {
         ...(options.output === undefined ? {} : { output: options.output }), ...(options.tab === undefined ? {} : { tabId: options.tab }) }));
     });
   program.command('mcp').option('--endpoint <endpoint>', 'Playwright CDP endpoint; Aside connects independently')
+    .option('--scheduling <auto|browser|host>', 'scheduling policy (transport always owned)', 'auto')
     .option('--launch', 'launch a task-owned Playwright browser').option('--headless', 'headless Playwright launch')
-    .option('--url <url>', 'prepare a task-owned page (requires --launch)')
+    .option('--url <url>', 'exact target URL; prepares a page only with --launch')
     .action(async (input: unknown) => {
       const options = connectionSchema.parse(input);
-      if (options.url && !options.launch) throw new FlashActError('INVALID_PLAN', 'MCP --url requires an owned --launch context');
-      if (options.endpoint && options.launch) throw new FlashActError('INVALID_PLAN', 'Choose --endpoint or --launch, not both');
       const { serveStdio } = await import('../mcp/index.js');
-      await serveStdio({ adapterOptionsByBackend: { playwright: adapterOptions(options) } });
+      await serveStdio({ scheduling: options.scheduling, adapterOptionsByBackend: { playwright: adapterOptions(options) } });
     });
   return program;
 }

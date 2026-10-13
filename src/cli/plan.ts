@@ -11,11 +11,15 @@ export const connectionSchema = z.object({
   backend: z.enum(['playwright', 'aside']).default('playwright'),
   endpoint: z.string().optional(), launch: z.boolean().optional(), headless: z.boolean().optional(),
   tab: z.string().optional(), url: z.string().optional(),
+  scheduling: z.enum(['auto', 'browser', 'host']).default('auto'),
+}).superRefine(options => {
+  if (options.launch && options.endpoint)
+    throw new FlashActError('INVALID_PLAN', 'Choose --endpoint or --launch, not both');
+  if (options.backend === 'aside' && (options.launch || options.headless))
+    throw new FlashActError('INVALID_PLAN', 'Aside attaches existing tabs only');
 });
 export function adapterOptions(input: unknown): AdapterOptions {
   const options = connectionSchema.parse(input);
-  if (options.backend === 'aside' && (options.launch || options.headless))
-    throw new FlashActError('INVALID_PLAN', 'Aside attaches existing tabs only');
   return {
     ...(options.endpoint === undefined ? {} : { endpoint: options.endpoint }),
     ...(options.launch === undefined ? {} : { launch: options.launch }),
@@ -35,10 +39,12 @@ export async function selectedTab(engine: JobEngine, input: unknown): Promise<st
   return matching[0].id;
 }
 
-const planOptionsSchema = connectionSchema.extend({
+const planOptionsSchema = connectionSchema.safeExtend({
   approvedUrl: z.string(), approveIrreversible: z.boolean().default(false), selector: z.string().optional(),
   action: z.literal('click'), at: z.string().optional(), when: z.string().optional(),
   attribute: z.string().optional(), value: z.string().optional(), timezone: z.string().default('UTC'),
+  verifySelector: z.string().min(1).optional(),
+  verifyTimeoutMs: z.coerce.number().int().positive().max(Number.MAX_SAFE_INTEGER).default(5000),
 });
 
 export async function commandPlan(engine: JobEngine, input: unknown) {
@@ -69,7 +75,8 @@ export async function commandPlan(engine: JobEngine, input: unknown) {
   return parsePlan({ schemaVersion: '1.0', jobId: randomUUID(), name: 'foreground', backend: options.backend,
     target: { tabId, selector, url: options.url ?? options.approvedUrl }, trigger, action: { type: options.action },
     timezone: options.timezone, expiresAt: scheduled?.type === 'SCHEDULED' ? scheduled.at + 60_000 : Date.now() + 86_400_000,
-    maxExecutions: 1, verification: { timeoutMs: 5000 },
+    maxExecutions: 1, verification: { timeoutMs: options.verifyTimeoutMs,
+      ...(options.verifySelector === undefined ? {} : { selector: options.verifySelector }) },
     guards: { approvedUrl: options.approvedUrl, allowIrreversible: options.approveIrreversible },
   });
 }
