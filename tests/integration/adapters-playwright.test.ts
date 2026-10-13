@@ -1,7 +1,12 @@
 import { chromium } from "playwright";
 import { describe, expect, it } from "vitest";
 import { PlaywrightAdapter } from "../../src/adapters/playwright/index.js";
+import type { createOwnedAdapter as OwnedFactory } from "../../src/adapters/factory.js";
+import type { BrowserAdapter } from "../../src/adapters/browser-adapter.js";
 import type { ExecutionPlan } from "../../src/core/types.js";
+
+const { createOwnedAdapter }: { readonly createOwnedAdapter: typeof OwnedFactory } =
+  await import(new URL("../../dist/adapters/factory.js", import.meta.url).href);
 
 const fixtureUrl = `data:text/html,${encodeURIComponent('<button id="go" onclick="document.body.dataset.clicks=String(Number(document.body.dataset.clicks||0)+1);document.body.insertAdjacentHTML(\'beforeend\',\'<span id=done>Done</span>\')">Go</button>')}`;
 
@@ -16,9 +21,9 @@ function plan(tabId: string, overrides: Partial<ExecutionPlan> = {}): ExecutionP
   };
 }
 
-async function selectedId(adapter: PlaywrightAdapter): Promise<string> {
+async function selectedId(adapter: BrowserAdapter): Promise<string> {
   const tabs = await adapter.listTabs();
-  const id = tabs[0]?.id;
+  const id = tabs.find(tab => tab.url === fixtureUrl)?.id ?? tabs[0]?.id;
   if (!id) throw new Error("Owned fixture tab missing");
   return id;
 }
@@ -194,3 +199,49 @@ describe("real Playwright adapter", () => {
     } finally { await adapter.disconnect(); }
   });
 });
+
+it("retains actual SDK dispatch evidence when its evaluate producer is terminated", async () => {
+  // Given: the emitted factory resolves its emitted worker beside itself.
+  const adapter = createOwnedAdapter("playwright", { launch: true, headless: true, url: fixtureUrl });
+  try {
+    await adapter.connect();
+    const input = plan(await selectedId(adapter));
+    await adapter.evaluate('document.querySelector("#go").disabled = true');
+    await adapter.installRuntime(input);
+    await adapter.arm(input);
+    const dispatched = new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => { unsubscribe(); reject(new Error("Owned SDK dispatch barrier missing")); }, 10_000);
+      const unsubscribe = adapter.owner.subscribe(status => {
+        if (status.jobId !== input.jobId || status.executions !== 1) return;
+        clearTimeout(timeout);
+        unsubscribe();
+        resolve();
+      });
+    });
+    const held = adapter.evaluate('(() => { document.querySelector("#go").disabled = false; return new Promise(() => {}); })()');
+    const rejected = expect(held).rejects.toMatchObject({ code: "ADAPTER_ERROR" });
+    await dispatched;
+    // When
+    const snapshots = await adapter.owner.stop("cancel");
+    await rejected;
+    // Then
+    expect(snapshots).toEqual([expect.objectContaining({ jobId: input.jobId, state: "UNKNOWN", executions: 1 })]);
+    await expect(adapter.connect()).rejects.toMatchObject({ code: "ADAPTER_ERROR" });
+  } finally { await adapter.owner.stop("shutdown"); }
+}, 45_000);
+
+it("gracefully cancels through the real SDK and joins a launched browser owner", async () => {
+  // Given
+  const adapter = createOwnedAdapter("playwright", { launch: true, headless: true, url: fixtureUrl });
+  try {
+    await adapter.connect();
+    const input = plan(await selectedId(adapter), { trigger: { type: "SCHEDULED", at: Date.now() + 30_000 } });
+    await adapter.installRuntime(input);
+    await adapter.arm(input);
+    // When
+    await adapter.disconnect();
+    // Then
+    expect(adapter.owner.kind).toBe("launched-browser");
+    expect(await adapter.owner.stop("shutdown")).toEqual([expect.objectContaining({ state: "CANCELLED", executions: 0 })]);
+  } finally { await adapter.owner.stop("shutdown"); }
+}, 45_000);

@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import type { BrowserAdapter } from '../../src/adapters/browser-adapter.js';
-import { JobEngine } from '../../src/core/engine.js';
+import type { AdapterOwner, BrowserAdapter } from '../../src/adapters/browser-adapter.js';
+import { JobEngine, isTerminal } from '../../src/core/engine.js';
+import type { Scheduler } from '../../src/core/scheduler/node-scheduler.js';
 import type { ExecutionPlan, JobStatus, TargetInfo } from '../../src/core/types.js';
 import { FlashActError } from '../../src/utils/errors.js';
 import { createMcpServer } from '../../src/mcp/server.js';
@@ -42,6 +43,327 @@ function fixture() {
   const adapter = new MemoryAdapter();
   return { adapter, engine: new JobEngine({ adapters: { playwright: adapter, aside: adapter }, now: () => 100 }) };
 }
+
+function deferred<T>() {
+  let resolve: (value: T) => void = () => undefined;
+  let reject: (error: unknown) => void = () => undefined;
+  const promise = new Promise<T>((yes, no) => { resolve = yes; reject = no; });
+  return { promise, resolve, reject };
+}
+
+class ManualScheduler implements Scheduler {
+  readonly entries: { at: number; callback: () => void; cancelled: boolean }[] = [];
+  schedule(at: number, callback: () => void) {
+    const entry = { at, callback, cancelled: false };
+    this.entries.push(entry);
+    return () => { entry.cancelled = true; };
+  }
+}
+
+class OwnedMemoryAdapter extends MemoryAdapter {
+  readonly listeners = new Set<(status: JobStatus) => void>();
+  readonly wakes: string[] = [];
+  readonly producerEvents: string[] = [];
+  heldStatus: ReturnType<typeof deferred<JobStatus>> | undefined;
+  readonly statusStarted = deferred<void>();
+  private stopped: Promise<readonly JobStatus[]> | undefined;
+  readonly owner: AdapterOwner = {
+    kind: 'endpoint-client',
+    subscribe: listener => { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; },
+    stop: () => {
+      if (this.stopped) return this.stopped;
+      this.producerEvents.push('producer-exited');
+      for (const status of this.statuses.values()) {
+        if (!isTerminal(status.state)) this.emit({ ...status, state: 'UNKNOWN' });
+      }
+      this.heldStatus?.reject(new FlashActError('ADAPTER_ERROR', 'Producer exited'));
+      this.heldStatus = undefined;
+      this.stopped = Promise.resolve([...this.statuses.values()]);
+      return this.stopped;
+    },
+  };
+  emit(status: JobStatus) {
+    this.statuses.set(status.jobId, status);
+    for (const listener of this.listeners) listener(status);
+  }
+  override async getStatus(id: string): Promise<JobStatus> {
+    if (!this.heldStatus) return super.getStatus(id);
+    this.statusStarted.resolve();
+    try { return await this.heldStatus.promise; }
+    catch (error) {
+      this.producerEvents.push('sdk-rejected');
+      throw error;
+    }
+  }
+  async wake(id: string): Promise<JobStatus> {
+    this.wakes.push(id);
+    return super.getStatus(id);
+  }
+  override async cancel(id: string) {
+    await super.cancel(id);
+    this.emit(await super.getStatus(id));
+  }
+  override async disconnect() {
+    await this.owner.stop('shutdown');
+    await super.disconnect();
+  }
+}
+
+async function ownedFixture(trigger: ExecutionPlan['trigger'] = { type: 'SCHEDULED', at: 200 }) {
+  const adapter = new OwnedMemoryAdapter();
+  const scheduler = new ManualScheduler();
+  const engine = new JobEngine({ adapters: { playwright: adapter }, adapterMode: 'owned',
+    scheduling: 'auto', scheduler, now: () => 100 });
+  await engine.createJob({ ...plan, trigger });
+  await engine.validateJob('job');
+  await engine.armJob('job');
+  return { adapter, scheduler, engine };
+}
+
+describe('owned engine scheduling and retention', () => {
+  it('keeps browser expiry authoritative when a host expiry wake finds a waiting runtime', async () => {
+    // Given
+    const { engine, adapter, scheduler } = await ownedFixture();
+    const expiry = scheduler.entries.find(entry => entry.at === plan.expiresAt);
+    if (!expiry) throw new FlashActError('INVALID_STATE', 'Missing expiry schedule');
+    try {
+      // When
+      expiry.callback();
+      // Then
+      expect(adapter.wakes).toEqual(['job']);
+      expect(await engine.getStatus('job')).toMatchObject({ state: 'WAITING', executions: 0 });
+    } finally { await engine.close(); }
+  });
+
+  it('rejects an unowned injected adapter without acquiring it in owned mode', async () => {
+    // Given
+    const adapter = new MemoryAdapter();
+    const connect = vi.spyOn(adapter, 'connect');
+    const engine = new JobEngine({ adapters: { playwright: adapter }, adapterMode: 'owned', now: () => 100 });
+    await engine.createJob(plan);
+    try {
+      // When / Then
+      await expect(engine.validateJob('job')).rejects.toMatchObject({ code: 'INVALID_PLAN' });
+      expect(connect).not.toHaveBeenCalled();
+    } finally { await engine.close(); }
+  });
+
+  it('joins and rejects a connection acknowledgement that arrives during close', async () => {
+    // Given
+    const adapter = new OwnedMemoryAdapter();
+    const connecting = deferred<void>();
+    const released = deferred<void>();
+    vi.spyOn(adapter, 'connect').mockImplementation(async () => { connecting.resolve(); await released.promise; });
+    const stop = adapter.owner.stop.bind(adapter.owner);
+    vi.spyOn(adapter.owner, 'stop').mockImplementation(reason => {
+      const joined = stop(reason);
+      released.resolve();
+      return joined;
+    });
+    const list = vi.spyOn(adapter, 'listTabs');
+    const engine = new JobEngine({ adapters: { playwright: adapter }, adapterMode: 'owned', now: () => 100 });
+    const listing = engine.listTabs('playwright').catch(error => error);
+    await connecting.promise;
+    // When
+    const closing = engine.close();
+    // Then
+    expect(engine.close()).toBe(closing);
+    await closing;
+    expect(await listing).toMatchObject({ code: 'INVALID_STATE' });
+    expect(list).not.toHaveBeenCalled();
+    expect(adapter.producerEvents).toEqual(['producer-exited']);
+  });
+
+  it('retains final local results without reconnecting after close', async () => {
+    // Given
+    const { engine, adapter } = await ownedFixture();
+    const connect = vi.spyOn(adapter, 'connect');
+    adapter.emit({ jobId: 'job', state: 'VERIFIED', executions: 1, updatedAt: 101 });
+    await engine.close();
+    // When
+    const result = await engine.getResult('job');
+    // Then
+    expect(result).toMatchObject({ state: 'VERIFIED', executions: 1 });
+    expect(connect).not.toHaveBeenCalled();
+    await expect(engine.armJob('job')).rejects.toMatchObject({ code: 'INVALID_STATE' });
+  });
+
+  it('starts a deadline wake while an ordinary status producer is pending', async () => {
+    // Given
+    const { engine, adapter, scheduler } = await ownedFixture();
+    adapter.heldStatus = deferred<JobStatus>();
+    const reading = engine.getStatus('job');
+    await adapter.statusStarted.promise;
+    const entry = scheduler.entries.find(entry => entry.at === 200);
+    if (!entry) throw new FlashActError('INVALID_STATE', 'Missing leaf schedule');
+    try {
+      // When
+      entry.callback();
+      // Then
+      expect(adapter.wakes).toEqual(['job']);
+      expect((await engine.close(), await reading).state).toBe('CANCELLED');
+      expect(adapter.producerEvents).toEqual(['producer-exited', 'sdk-rejected']);
+    } finally { await engine.close(); }
+  });
+
+  it.each(['AND', 'OR'] as const)('schedules distinct leaves rather than only the maximum for %s', async type => {
+    // Given
+    const { engine, scheduler } = await ownedFixture({ type, conditions: [
+      { type: 'SCHEDULED', at: 200 }, { type: 'SCHEDULED', at: 300 },
+      { type: 'SCHEDULED', at: 200 }, { type: 'SCHEDULED', at: 10000 },
+    ] });
+    try {
+      // When
+      const times = scheduler.entries.map(entry => entry.at);
+      // Then
+      expect(times).toEqual([200, 300, 10000]);
+    } finally { await engine.close(); }
+  });
+
+  it('collapses past leaf deadlines into one asynchronous readiness callback', async () => {
+    // Given
+    const { engine, scheduler } = await ownedFixture({ type: 'OR', conditions: [
+      { type: 'SCHEDULED', at: 50 }, { type: 'SCHEDULED', at: 80 }, { type: 'SCHEDULED', at: 200 },
+    ] });
+    try {
+      // When
+      const times = scheduler.entries.map(entry => entry.at);
+      // Then
+      expect(times).toEqual([200, 100, 10000]);
+    } finally { await engine.close(); }
+  });
+
+  it('does not invent host polling or deadlines for reactive auto jobs', async () => {
+    // Given
+    const { engine, scheduler } = await ownedFixture(plan.trigger);
+    try {
+      // When
+      const status = await engine.getStatus('job');
+      // Then
+      expect(scheduler.entries).toEqual([]);
+      expect(status.execution).toMatchObject({ scheduler: 'browser', reason: 'no-scheduled-leaves' });
+    } finally { await engine.close(); }
+  });
+
+  it('retains a confirmed dispatch against an older waiting reply', async () => {
+    // Given
+    const { engine, adapter } = await ownedFixture();
+    adapter.emit({ jobId: 'job', state: 'DISPATCHED', executions: 1, updatedAt: 101, timing: { clickEpochMs: 101 } });
+    adapter.statuses.set('job', { jobId: 'job', state: 'WAITING', executions: 0, updatedAt: 1 });
+    try {
+      // When
+      const status = await engine.getStatus('job');
+      // Then
+      expect(status).toMatchObject({ state: 'DISPATCHED', executions: 1, timing: { clickEpochMs: 101 } });
+    } finally { await engine.close(); }
+  });
+
+  it('logs new execution evidence without reviving an unknown job', async () => {
+    // Given
+    const { engine, adapter } = await ownedFixture();
+    adapter.emit({ jobId: 'job', state: 'UNKNOWN', executions: 0, updatedAt: 101 });
+    // When
+    adapter.emit({ jobId: 'job', state: 'VERIFIED', executions: 1, updatedAt: 102 });
+    try {
+      // Then
+      expect(await engine.getResult('job')).toMatchObject({ state: 'UNKNOWN', executions: 1 });
+      expect(engine.logs().at(-1)).toMatchObject({ state: 'UNKNOWN', executions: 1 });
+    } finally { await engine.close(); }
+  });
+
+  it('retains a verified observation that precedes an arm acknowledgement', async () => {
+    // Given
+    const adapter = new OwnedMemoryAdapter();
+    const engine = new JobEngine({ adapters: { playwright: adapter }, scheduling: 'auto', now: () => 100 });
+    vi.spyOn(adapter, 'arm').mockImplementation(async () => {
+      adapter.emit({ jobId: 'job', state: 'VERIFIED', executions: 1, updatedAt: 101 });
+    });
+    await engine.createJob(plan); await engine.validateJob('job');
+    try {
+      // When
+      const result = await engine.armJob('job');
+      // Then
+      expect(result).toMatchObject({ state: 'VERIFIED', executions: 1 });
+    } finally { await engine.close(); }
+  });
+
+  it('prevents a dequeued leaf callback from starting after cancellation', async () => {
+    // Given
+    const { engine, adapter, scheduler } = await ownedFixture();
+    const entry = scheduler.entries.find(entry => entry.at === 200);
+    if (!entry) throw new FlashActError('INVALID_STATE', 'Missing leaf schedule');
+    await engine.cancelJob('job');
+    try {
+      // When
+      entry.callback();
+      // Then
+      expect(adapter.wakes).toEqual([]);
+      expect(scheduler.entries.every(entry => entry.cancelled)).toBe(true);
+    } finally { await engine.close(); }
+  });
+
+  it('admits cancellation before a stalled status read and joins the producer at its deadline', async () => {
+    // Given
+    vi.useFakeTimers();
+    const { engine, adapter } = await ownedFixture();
+    adapter.heldStatus = deferred<JobStatus>();
+    const reading = engine.getStatus('job');
+    await adapter.statusStarted.promise;
+    const cancelled = deferred<void>();
+    vi.spyOn(adapter, 'cancel').mockImplementation(async id => {
+      adapter.emit({ jobId: id, state: 'CANCELLED', executions: 0, updatedAt: 101 });
+      cancelled.resolve();
+    });
+    try {
+      // When
+      const cancellation = engine.cancelJob('job');
+      await cancelled.promise;
+      await vi.advanceTimersByTimeAsync(2000);
+      // Then
+      expect(await cancellation).toMatchObject({ state: 'CANCELLED', executions: 0 });
+      expect(await reading).toMatchObject({ state: 'CANCELLED', executions: 0 });
+      expect(adapter.producerEvents).toEqual(['producer-exited', 'sdk-rejected']);
+    } finally { await engine.close(); vi.useRealTimers(); }
+  });
+
+  it('does not arm when cancellation arrives during runtime installation', async () => {
+    // Given
+    const adapter = new OwnedMemoryAdapter();
+    const engine = new JobEngine({ adapters: { playwright: adapter }, scheduling: 'auto', now: () => 100 });
+    const installed = deferred<void>();
+    const release = deferred<void>();
+    const install = adapter.installRuntime.bind(adapter);
+    vi.spyOn(adapter, 'installRuntime').mockImplementation(async input => {
+      installed.resolve(); await release.promise; return install(input);
+    });
+    const arm = vi.spyOn(adapter, 'arm');
+    await engine.createJob(plan); await engine.validateJob('job');
+    const arming = engine.armJob('job').catch(error => error);
+    await installed.promise;
+    try {
+      // When
+      const cancellation = engine.cancelJob('job');
+      release.resolve();
+      // Then
+      expect(await cancellation).toMatchObject({ state: 'CANCELLED', executions: 0 });
+      expect(await arming).toMatchObject({ code: 'INVALID_STATE' });
+      expect(arm).not.toHaveBeenCalled();
+    } finally { await engine.close(); }
+  });
+
+  it('rejects explicit host mode on a cooperative adapter before installation', async () => {
+    // Given
+    const adapter = new MemoryAdapter();
+    const engine = new JobEngine({ adapters: { playwright: adapter }, scheduling: 'host', now: () => 100 });
+    await engine.createJob(plan);
+    try {
+      // When / Then
+      await expect(engine.validateJob('job')).rejects.toMatchObject({ code: 'INVALID_PLAN' });
+      expect(adapter.statuses.size).toBe(0);
+      expect(engine.capabilities()[0]).toMatchObject({ hostWake: false, shutdown: 'cooperative' });
+    } finally { await engine.close(); }
+  });
+});
 
 describe('foreground engine', () => {
   it('keeps a runtime waiting when status is polled', async () => {

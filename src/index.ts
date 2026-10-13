@@ -3,6 +3,8 @@ export type {
   Backend,
   BrowserTab,
   ExecutionPlan,
+  ExecutionInfo,
+  BackendCapabilities,
   JobState,
   JobStatus,
   JobTiming,
@@ -14,6 +16,7 @@ export {
   MAX_TRIGGER_CONDITIONS,
   MAX_TRIGGER_DEPTH,
   browserTabsSchema,
+  executionInfoSchema,
   jobStatusSchema,
   parsePlan,
   planSchema,
@@ -23,6 +26,9 @@ export {
 } from "./core/schema.js";
 export type {
   AdapterOptions,
+  AdapterOwner,
+  AdapterOwnerKind,
+  AdapterStopReason,
   AsideAdapterOptions,
   AsideOptions,
   BrowserAdapter,
@@ -34,7 +40,7 @@ export type { EngineOptions } from "./core/engine.js";
 export { NodeScheduler } from "./core/scheduler/node-scheduler.js";
 export type { Clock, Scheduler } from "./core/scheduler/node-scheduler.js";
 export { wakeExpression } from "./runtime/index.js";
-export { createAdapter } from "./adapters/factory.js";
+export { createAdapter, createOwnedAdapter } from "./adapters/factory.js";
 export type { AdapterFactoryOptions } from "./adapters/factory.js";
 export { PlaywrightAdapter } from "./adapters/playwright/index.js";
 export type { PlaywrightAdapterOptions } from "./adapters/playwright/index.js";

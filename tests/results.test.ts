@@ -13,6 +13,34 @@ const target = {
 };
 
 describe("job status boundary", () => {
+  const execution = {
+    requested: "auto", scheduler: "host-assisted", transport: "owned-worker",
+    browserOwnership: "borrowed", reason: "scheduled-leaves",
+  };
+
+  it("preserves declared execution source metadata", () => {
+    // Given
+    const input = { ...status, execution };
+    // When
+    const result = jobStatusSchema.parse(input);
+    // Then
+    expect(result).toEqual(input);
+  });
+
+  it.each([
+    null, undefined, { ...execution, requested: "unsafe" },
+    { ...execution, scheduler: "poll" }, { ...execution, transport: "abandoned-promise" },
+    { ...execution, browserOwnership: "unknown" }, { ...execution, reason: "fallback" },
+    { ...execution, endpoint: "http://127.0.0.1:1234" },
+  ])("rejects malformed execution metadata %j", execution => {
+    // Given
+    const input = { ...status, execution };
+    // When
+    const result = jobStatusSchema.safeParse(input);
+    // Then
+    expect(result.success).toBe(false);
+  });
+
   it.each([
     "DRAFT", "VALIDATED", "ARMED", "WAITING", "DISPATCHED", "VERIFIED",
     "UNKNOWN", "FAILED", "EXPIRED", "CANCELLED", "INVALIDATED",

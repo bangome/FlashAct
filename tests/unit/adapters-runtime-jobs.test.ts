@@ -211,3 +211,20 @@ it("does not attribute a replacement runtime's click report to the installed job
   // Then
   expect(await fixture.jobs.status(plan.jobId)).toMatchObject({ state: "INVALIDATED", executions: 0 });
 });
+
+it("forwards locally retained late execution independently of held command replies", async () => {
+  // Given
+  const observations: JobStatus[] = [];
+  const initial: JobStatus = { jobId: plan.jobId, state: "VALIDATED", executions: 0, updatedAt: 1 };
+  const responses: unknown[] = [undefined, JSON.stringify({ jobId: plan.jobId, documentId: "document" }), undefined,
+    JSON.stringify(initial), JSON.stringify({ current: true, status: { ...initial, state: "WAITING", updatedAt: 2 } })];
+  const jobs = new RuntimeJobs(async () => responses.shift(), true, status => observations.push(status));
+  await jobs.install(plan);
+  await jobs.arm(plan);
+  jobs.invalidate(undefined, "disconnect");
+  // When
+  jobs.receive(jobs.eventMarker + JSON.stringify({ ...initial, state: "DISPATCHED", executions: 1, updatedAt: 3 }));
+  // Then
+  expect(observations.at(-1)).toMatchObject({ state: "UNKNOWN", executions: 1 });
+  expect(jobs.snapshot()).toEqual([observations.at(-1)]);
+});

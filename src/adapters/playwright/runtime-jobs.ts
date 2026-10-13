@@ -37,7 +37,7 @@ const stateRank = {
   VERIFIED: 5, UNKNOWN: 5, FAILED: 5, EXPIRED: 5, CANCELLED: 5, INVALIDATED: 5,
 } as const;
 
-function pending(status: JobStatus): boolean {
+export function pending(status: JobStatus): boolean {
   switch (status.state) {
     case "DRAFT": case "VALIDATED": case "ARMED": case "WAITING": case "DISPATCHED": return true;
     case "VERIFIED": case "UNKNOWN": case "FAILED": case "EXPIRED": case "CANCELLED": case "INVALIDATED": return false;
@@ -45,7 +45,7 @@ function pending(status: JobStatus): boolean {
   }
 }
 
-function dispatchable(status: JobStatus): boolean {
+export function dispatchable(status: JobStatus): boolean {
   switch (status.state) {
     case "ARMED": case "WAITING": case "DISPATCHED": return true;
     case "DRAFT": case "VALIDATED": case "VERIFIED": case "UNKNOWN":
@@ -54,12 +54,34 @@ function dispatchable(status: JobStatus): boolean {
   }
 }
 
+export function retainStatus(previous: JobStatus, observation: JobStatus, lost = false): JobStatus {
+  const status = observation.state === "INVALIDATED" && observation.executions > 0
+    ? { ...observation, state: "UNKNOWN" as const } : observation;
+  if (lost || !pending(previous)) {
+    if (status.executions > previous.executions) {
+      const timing = status.timing ?? previous.timing;
+      return { ...previous, state: "UNKNOWN", executions: status.executions,
+        ...(timing ? { timing } : {}),
+        message: "Execution observed after terminal or lost status; no retry" };
+    }
+    return previous;
+  }
+  if (status.executions >= previous.executions && stateRank[status.state] >= stateRank[previous.state]) {
+    const timing = status.timing ?? previous.timing;
+    return timing ? { ...status, timing } : status;
+  }
+  return previous;
+}
+
 export class RuntimeJobs {
   readonly eventMarker = `__FLASHACT_STATUS_${randomUUID()}__`;
   private readonly jobs = new Map<string, TrackedJob>();
   private readonly marker = `__flashact_adapter_${randomUUID().replaceAll("-", "")}`;
 
-  constructor(private readonly evaluateTab: (tabId: string, expression: string) => Promise<unknown>, private readonly observesDispatch = true) {}
+  constructor(private readonly evaluateTab: (tabId: string, expression: string) => Promise<unknown>,
+    private readonly observesDispatch = true, private readonly observation?: (status: JobStatus) => void) {}
+
+  snapshot(): readonly JobStatus[] { return [...this.jobs.values()].map(job => job.status); }
 
   async inspect(tabId: string, selector: string): Promise<TargetInfo> {
     return decodeRuntime(await this.evaluateTab(tabId, inspectExpression(selector)), targetInfoSchema);
@@ -75,6 +97,7 @@ export class RuntimeJobs {
     await this.evaluateTab(plan.target.tabId, `(() => { const runtime = globalThis.__flashactRuntime; const report = () => console.log(${JSON.stringify(this.eventMarker)} + JSON.stringify(runtime.status(${JSON.stringify(plan.jobId)}))); globalThis[${JSON.stringify(this.marker + plan.jobId)}] = { token: ${JSON.stringify(token)}, runtime, cleanup: () => { window.removeEventListener("click", report, true); window.removeEventListener("pagehide", report); } }; window.addEventListener("click", report, true); window.addEventListener("pagehide", report); })()`);
     const status = decodeRuntime(await this.evaluateTab(plan.target.tabId, statusExpression(plan.jobId)), jobStatusSchema);
     this.jobs.set(plan.jobId, { tabId: plan.target.tabId, handle, token, status, lost: false, armed: dispatchable(status) });
+    this.observation?.(status);
     return handle;
   }
 
@@ -111,6 +134,7 @@ export class RuntimeJobs {
     for (const [id, job] of this.jobs) {
       if (reason === "disconnect" && job.lossReason === "close" && job.status.executions === 0 && !job.armed) {
         this.jobs.set(id, { ...job, lossReason: reason, status: { ...job.status, state: "FAILED", updatedAt: Date.now(), message: "Runtime lost: disconnect" } });
+        this.observation?.(this.requireJob(id).status);
         continue;
       }
       if ((tabId === undefined || tabId === job.tabId) && !job.lost && pending(job.status)) {
@@ -120,6 +144,7 @@ export class RuntimeJobs {
         const state = dispatched ? "UNKNOWN" : reason === "disconnect" ? "FAILED" : "INVALIDATED";
         const message = uncertain ? `Runtime lost: ${reason}; dispatch may have occurred after the last observation; executions is the last observed count, not proof of no click` : `Runtime lost: ${reason}`;
         this.jobs.set(id, { ...job, lost: true, lossReason: reason, status: { ...job.status, state, updatedAt: Date.now(), message } });
+        this.observation?.(this.requireJob(id).status);
       }
     }
   }
@@ -155,18 +180,10 @@ export class RuntimeJobs {
 
   private retain(jobId: string, observation: JobStatus): JobStatus {
     const job = this.requireJob(jobId);
-    const status = observation.state === "INVALIDATED" && observation.executions > 0
-      ? { ...observation, state: "UNKNOWN" as const } : observation;
-    if (job.lost || !pending(job.status)) {
-      // New execution evidence must not erase a confirmed terminal outcome or
-      // make a lost installation usable again.
-      if (status.executions > job.status.executions) {
-        this.jobs.set(jobId, { ...job, status: { ...job.status, state: "UNKNOWN",
-          executions: status.executions, message: "Execution observed after terminal or lost status; no retry" } });
-      }
-    } else if (status.executions >= job.status.executions
-      && stateRank[status.state] >= stateRank[job.status.state]) {
+    const status = retainStatus(job.status, observation, job.lost);
+    if (status !== job.status) {
       this.jobs.set(jobId, { ...job, status, armed: job.armed || dispatchable(status) });
+      this.observation?.(status);
     }
     return this.requireJob(jobId).status;
   }

@@ -4,23 +4,30 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { chromium } from 'playwright';
-import type { Page } from 'playwright';
-import { describe, expect, it } from 'vitest';
+import type { Browser, Page } from 'playwright';
+import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { serveFixture } from '../../src/benchmark/fixture.js';
+
+let fixtureBrowser: Promise<Browser> | undefined;
+
+afterAll(async () => {
+  if (fixtureBrowser) await (await fixtureBrowser).close();
+});
 
 async function withFixturePage(query: string, check: (page: Page) => Promise<void>) {
   const fixture = await serveFixture();
   try {
-    const browser = await chromium.launch({headless: true});
+    fixtureBrowser ??= chromium.launch({headless: true});
+    const context = await (await fixtureBrowser).newContext();
     try {
-      const page = await browser.newPage();
+      const page = await context.newPage();
       await page.clock.install({time: 0});
       // Installation starts running; freeze forward before authored timers exist.
       await page.clock.pauseAt(1_600_000_000_000);
       await page.goto(`${fixture.url}${query}`);
       await check(page);
-    } finally { await browser.close(); }
+    } finally { await context.close(); }
   } finally { await fixture.close(); }
 }
 

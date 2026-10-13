@@ -3,6 +3,7 @@ import type { z } from "zod";
 import {
   assertNever,
   browserTabsSchema,
+  executionInfoSchema,
   jobStatusSchema,
   parsePlan,
   planSchema,
@@ -13,10 +14,12 @@ import {
 } from "../src/index.js";
 import type {
   AdapterOptions,
+  AdapterOwner,
   AsideOptions,
   BrowserAdapter,
   BrowserTab,
   ExecutionPlan,
+  ExecutionInfo,
   JobStatus,
   RuntimeHandle,
   TargetInfo,
@@ -30,6 +33,7 @@ it("keeps schema output identical to the public domain contracts", () => {
   expectTypeOf<z.output<typeof planSchema>>().toEqualTypeOf<ExecutionPlan>();
   expectTypeOf<z.output<typeof triggerSchema>>().toEqualTypeOf<Trigger>();
   expectTypeOf<z.output<typeof jobStatusSchema>>().toEqualTypeOf<JobStatus>();
+  expectTypeOf<z.output<typeof executionInfoSchema>>().toEqualTypeOf<ExecutionInfo>();
   expectTypeOf<z.output<typeof targetInfoSchema>>().toEqualTypeOf<TargetInfo>();
   expectTypeOf<z.output<typeof browserTabsSchema>>().toEqualTypeOf<readonly BrowserTab[]>();
   expectTypeOf<z.output<typeof runtimeHandleSchema>>().toEqualTypeOf<RuntimeHandle>();
@@ -42,6 +46,7 @@ it("keeps asynchronous adapter signatures independent of implementation", () => 
   // When
   // Then
   expectTypeOf<BrowserAdapter>().toEqualTypeOf<{
+    readonly owner?: AdapterOwner;
     connect(): Promise<void>;
     listTabs(): Promise<readonly BrowserTab[]>;
     selectTab(tabId: string): Promise<void>;

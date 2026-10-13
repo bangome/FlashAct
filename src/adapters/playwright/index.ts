@@ -3,7 +3,7 @@ import { chromium } from "playwright";
 import type { Browser, BrowserContext, Page, Frame, ConsoleMessage } from "playwright";
 import { z } from "zod";
 import type { AdapterOptions, BrowserAdapter } from "../browser-adapter.js";
-import type { ExecutionPlan } from "../../core/types.js";
+import type { ExecutionPlan, JobStatus } from "../../core/types.js";
 import { browserTabsSchema } from "../../core/schema.js";
 import { FlashActError } from "../../utils/errors.js";
 import { RuntimeJobs } from "./runtime-jobs.js";
@@ -11,6 +11,12 @@ import { RuntimeJobs } from "./runtime-jobs.js";
 export type PlaywrightAdapterOptions = AdapterOptions & {
   readonly page?: Page;
   readonly context?: BrowserContext;
+};
+
+export type PlaywrightConnectionHooks = {
+  readonly artifactsDir: string;
+  readonly observation: (status: JobStatus) => void;
+  readonly lost: () => void;
 };
 
 export class PlaywrightAdapter implements BrowserAdapter {
@@ -21,11 +27,13 @@ export class PlaywrightAdapter implements BrowserAdapter {
   private readonly pages = new Map<string, Page>();
   private readonly identities = new WeakMap<Page, string>();
   private readonly listeners = new Map<Page, { readonly close: () => void; readonly navigation: (frame: Frame) => void }>();
-  private readonly jobs = new RuntimeJobs((tabId, expression) => this.evaluateTab(tabId, expression));
-  private readonly disconnected = (): void => { this.connected = false; this.jobs.invalidate(undefined, "disconnect"); };
+  private readonly jobs: RuntimeJobs;
+  private readonly disconnected = (): void => { this.connected = false; this.jobs.invalidate(undefined, "disconnect"); this.hooks?.lost(); };
   private readonly consoleMessage = (message: ConsoleMessage): void => { this.jobs.receive(message.text()); };
 
-  constructor(private readonly options: PlaywrightAdapterOptions = {}) {}
+  constructor(private readonly options: PlaywrightAdapterOptions = {}, private readonly hooks?: PlaywrightConnectionHooks) {
+    this.jobs = new RuntimeJobs((tabId, expression) => this.evaluateTab(tabId, expression), true, hooks?.observation);
+  }
 
   async connect(): Promise<void> {
     if (this.connected) return;
@@ -35,7 +43,9 @@ export class PlaywrightAdapter implements BrowserAdapter {
         this.context = options.page?.context() ?? options.context;
         this.browser = this.context?.browser() ?? undefined;
       } else if (options.endpoint) {
-        this.browser = await chromium.connectOverCDP(options.endpoint, { timeout: 30_000 });
+        this.browser = await chromium.connectOverCDP(options.endpoint, {
+          timeout: 30_000, ...(this.hooks ? { noDefaults: true, artifactsDir: this.hooks.artifactsDir } : {}),
+        });
       } else if (options.launch === true) {
         if (options.userDataDir) {
           this.context = await chromium.launchPersistentContext(options.userDataDir, { headless: options.headless ?? true, timeout: 30_000 });

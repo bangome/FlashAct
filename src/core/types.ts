@@ -70,12 +70,35 @@ export type JobTiming = {
   readonly conditionEpochMs?: number;
 };
 
+export type ExecutionInfo = {
+  readonly requested: "browser" | "auto" | "host";
+  readonly scheduler: "browser" | "host-assisted";
+  readonly transport: "direct" | "owned-worker" | "owned-aside-cli";
+  readonly browserOwnership: "owned" | "borrowed";
+  readonly reason:
+    | "explicit-browser"
+    | "explicit-host"
+    | "scheduled-leaves"
+    | "no-scheduled-leaves"
+    | "unsupported-host-wake"
+    | "cooperative-transport";
+};
+
+export type BackendCapabilities = {
+  readonly backend: Backend;
+  readonly connectionConfigured: boolean;
+  readonly transport: ExecutionInfo["transport"];
+  readonly hostWake: boolean;
+  readonly shutdown: "owned" | "cooperative";
+};
+
 export type JobStatus = {
   readonly jobId: string;
   readonly state: JobState;
   readonly executions: number;
   readonly message?: string;
   readonly timing?: JobTiming;
+  readonly execution?: ExecutionInfo;
   readonly updatedAt: number;
 };
 

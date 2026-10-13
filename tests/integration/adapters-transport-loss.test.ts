@@ -12,6 +12,7 @@ import type { ExecutionPlan, JobStatus } from "../../src/core/types.js";
 it("retains UNKNOWN without rearming when a disconnected CDP client leaves the armed page alive", async () => {
   // Given: an externally owned browser and two independent public CDP clients.
   const profile = await mkdtemp(join(tmpdir(), "flashact-transport-loss-"));
+  const diagnostic = await mkdtemp(join(tmpdir(), "flashact-transport-loss-diagnostic-"));
   const child = spawn(chromium.executablePath(), ["--headless", "--no-first-run", "--no-default-browser-check", "--remote-debugging-port=0", `--user-data-dir=${profile}`, "about:blank"], { stdio: ["ignore", "ignore", "pipe"] });
   const exited = new Promise<{ readonly code: number | null; readonly signal: string | null }>((resolve) => child.once("exit", (code, signal) => resolve({ code, signal })));
   let control: Browser | undefined;
@@ -97,12 +98,13 @@ it("retains UNKNOWN without rearming when a disconnected CDP client leaves the a
         receipt.cleanup.chromeExit = await exited;
         await rm(profile, { recursive: true, force: true });
         receipt.cleanup.profileRemoved = true;
-        await writeFile("artifacts/qa/transport-loss-after.json", JSON.stringify({
+        await writeFile(join(diagnostic, "transport-loss-after.json"), JSON.stringify({
           real: true, recordedAt: new Date().toISOString(),
           command: "npm test -- tests/integration/adapters-transport-loss.test.ts", receipt,
           assumptionFinding: "Armed unconfirmed zero after CDP transport loss is not proof of no click; the old FAILED expectation was incorrect.",
           touchedFiles: ["src/adapters/playwright/runtime-jobs.ts", "tests/integration/adapters-playwright.test.ts", "tests/integration/adapters-transport-loss.test.ts", "tests/unit/adapters-runtime-jobs.test.ts"],
         }, null, 2) + "\n");
+        await rm(diagnostic, { recursive: true, force: true });
       }
     }
   }

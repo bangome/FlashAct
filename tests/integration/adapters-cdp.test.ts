@@ -6,6 +6,11 @@ import { join } from "node:path";
 import { chromium } from "playwright";
 import { expect, it } from "vitest";
 import { PlaywrightAdapter } from "../../src/adapters/playwright/index.js";
+import type { createOwnedAdapter as OwnedFactory } from "../../src/adapters/factory.js";
+import { ChromeOwner } from "../../src/adapters/playwright/chrome-owner.js";
+
+const { createOwnedAdapter }: { readonly createOwnedAdapter: typeof OwnedFactory } =
+  await import(new URL("../../dist/adapters/factory.js", import.meta.url).href);
 
 it("uses actual CDP target IDs and leaves an attached browser alive on disconnect", async () => {
   // Given
@@ -53,6 +58,43 @@ it("uses actual CDP target IDs and leaves an attached browser alive on disconnec
     await attached?.disconnect();
     child.kill("SIGTERM");
     await exited;
+    await rm(profile, { recursive: true, force: true });
+  }
+}, 45_000);
+
+it.each(["graceful", "forced"] as const)("preserves a borrowed local endpoint and existing context on %s owner exit", async mode => {
+  // Given: the test, not the product, owns this exact Chrome group/profile.
+  const profile = await mkdtemp(join(tmpdir(), "owned-borrowed-endpoint-"));
+  const chrome = new ChromeOwner(profile, true);
+  let connection: Awaited<ReturnType<typeof chromium.connectOverCDP>> | undefined;
+  let adapter: ReturnType<typeof createOwnedAdapter> | undefined;
+  try {
+    const endpoint = await chrome.endpoint;
+    connection = await chromium.connectOverCDP(endpoint, { noDefaults: true });
+    const context = connection.contexts()[0];
+    const page = context?.pages()[0];
+    if (!context || !page) throw new Error("Borrowed fixture context missing");
+    await context.addCookies([{ name: "borrowed-owner", value: "retained", url: "http://127.0.0.1" }]);
+    const initialUrl = page.url();
+    const pages = context.pages();
+    adapter = createOwnedAdapter("playwright", { endpoint });
+    await adapter.connect();
+    // When
+    if (mode === "graceful") await adapter.disconnect();
+    else await adapter.owner.stop("deadline");
+    // Then
+    expect(adapter.owner.kind).toBe("endpoint-client");
+    expect(chrome.child.exitCode).toBeNull();
+    expect(chrome.child.signalCode).toBeNull();
+    expect(connection.isConnected()).toBe(true);
+    expect(context.pages()).toEqual(pages);
+    expect(page.url()).toBe(initialUrl);
+    expect(await page.evaluate("2 + 3")).toBe(5);
+    expect(await context.cookies()).toEqual([expect.objectContaining({ name: "borrowed-owner", value: "retained" })]);
+  } finally {
+    await adapter?.owner.stop("shutdown");
+    await connection?.close();
+    await chrome.stop();
     await rm(profile, { recursive: true, force: true });
   }
 }, 45_000);

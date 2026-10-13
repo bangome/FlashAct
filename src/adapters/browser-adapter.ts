@@ -6,7 +6,18 @@ import type {
   TargetInfo,
 } from "../core/types.js";
 
+export type AdapterOwnerKind = "launched-browser" | "endpoint-client" | "aside-client";
+export type AdapterStopReason = "shutdown" | "deadline" | "cancel";
+
+export interface AdapterOwner {
+  readonly kind: AdapterOwnerKind;
+  subscribe(listener: (status: JobStatus) => void): () => void;
+  /** Seal admission synchronously and join actual producers before resolving. */
+  stop(reason: AdapterStopReason): Promise<readonly JobStatus[]>;
+}
+
 export interface BrowserAdapter {
+  readonly owner?: AdapterOwner;
   connect(): Promise<void>;
   listTabs(): Promise<readonly BrowserTab[]>;
   selectTab(tabId: string): Promise<void>;

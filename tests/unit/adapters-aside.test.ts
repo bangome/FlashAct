@@ -1,9 +1,14 @@
 import { runInNewContext } from "node:vm";
-import { describe, expect, it } from "vitest";
+import { watch } from "node:fs";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { z } from "zod";
+import { describe, expect, it, vi } from "vitest";
 import { AsideAdapter } from "../../src/adapters/aside/index.js";
-import { AsideTransport, decodeAsideOutput, execAside } from "../../src/adapters/aside/runner.js";
+import { AsideTransport, ManagedAsideRunner, decodeAsideOutput, execAside } from "../../src/adapters/aside/runner.js";
 import type { AsideCommandRunner } from "../../src/adapters/aside/runner.js";
-import { createAdapter } from "../../src/adapters/factory.js";
+import { createAdapter, createOwnedAdapter } from "../../src/adapters/factory.js";
 import { PlaywrightAdapter } from "../../src/adapters/playwright/index.js";
 
 describe("Aside CLI boundary", () => {
@@ -89,6 +94,56 @@ describe("Aside CLI boundary", () => {
       await expect(adapter.selectTab("not-an-exact-id")).rejects.toMatchObject({ code: "ADAPTER_ERROR" });
     } finally { await adapter.disconnect(); }
   });
+});
+
+it("does not claim command ownership for an arbitrary injected Aside runner", async () => {
+  // Given
+  const adapter = new AsideAdapter({}, async () => "");
+  // When / Then
+  expect("owner" in adapter).toBe(false);
+  const owned = createOwnedAdapter("aside");
+  expect(owned.owner.kind).toBe("aside-client");
+  expect(owned.wake).toBeUndefined();
+  await owned.owner.stop("shutdown");
+});
+
+it.each(["shutdown", "deadline"] as const)("joins a real managed Aside command before %s rejection", async reason => {
+  // Given
+  const root = await mkdtemp(join(tmpdir(), "aside-command-test-"));
+  const startedPath = join(root, "started");
+  let startedSignal: () => void = () => {};
+  const started = new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("Aside fixture start barrier missing")), 10_000);
+    startedSignal = () => { clearTimeout(timer); resolve(); };
+  });
+  const watcher = watch(root, (_event, name) => { if (name === "started") startedSignal(); });
+  const runner = new ManagedAsideRunner();
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+  const command = runner.run(process.execPath, [
+    new URL("./owned-adapter-process.mjs", import.meta.url).pathname, "ignore-term", `started-path=${startedPath}`,
+  ]);
+  const rejected = expect(command).rejects.toMatchObject({ code: "ADAPTER_ERROR" });
+  let pid: number | undefined;
+  try {
+    await started;
+    pid = z.object({ pid: z.number().int().positive() }).parse(JSON.parse(await readFile(startedPath, "utf8"))).pid;
+    expect(() => process.kill(pid ?? 0, 0)).not.toThrow();
+    // When
+    if (reason === "deadline") vi.advanceTimersByTime(5_000);
+    const stopping = runner.stop();
+    expect(runner.stop()).toBe(stopping);
+    vi.advanceTimersByTime(2_000);
+    await stopping;
+    await rejected;
+    // Then: a close receipt is backed by actual process absence.
+    expect(() => process.kill(pid ?? 0, 0)).toThrow(expect.objectContaining({ code: "ESRCH" }));
+    await expect(runner.run(process.execPath, ["--version"])).rejects.toMatchObject({ code: "ADAPTER_ERROR" });
+  } finally {
+    vi.useRealTimers();
+    await runner.stop();
+    watcher.close();
+    await rm(root, { recursive: true, force: true });
+  }
 });
 
 describe("adapter factory", () => {

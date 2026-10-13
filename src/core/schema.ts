@@ -4,6 +4,7 @@ import { JOB_STATES } from "./types.js";
 import type {
   BrowserTab,
   ExecutionPlan,
+  ExecutionInfo,
   JobStatus,
   RuntimeHandle,
   TargetInfo,
@@ -92,11 +93,23 @@ export const planSchema = z.strictObject({
   message: "Approved URL must exactly match the target URL",
 }).readonly() satisfies z.ZodType<ExecutionPlan>;
 
+export const executionInfoSchema = z.strictObject({
+  requested: z.enum(["browser", "auto", "host"]),
+  scheduler: z.enum(["browser", "host-assisted"]),
+  transport: z.enum(["direct", "owned-worker", "owned-aside-cli"]),
+  browserOwnership: z.enum(["owned", "borrowed"]),
+  reason: z.enum([
+    "explicit-browser", "explicit-host", "scheduled-leaves",
+    "no-scheduled-leaves", "unsupported-host-wake", "cooperative-transport",
+  ]),
+}).readonly() satisfies z.ZodType<ExecutionInfo>;
+
 export const jobStatusSchema = z.strictObject({
   jobId: text,
   state: z.enum(JOB_STATES),
   executions: count.max(1),
   message: z.string().exactOptional(),
+  execution: executionInfoSchema.exactOptional(),
   timing: z.strictObject({
     targetEpochMs: epochMs.exactOptional(),
     schedulerEpochMs: epochMs.exactOptional(),
