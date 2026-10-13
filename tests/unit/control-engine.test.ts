@@ -3,10 +3,15 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import type { AdapterOwner, BrowserAdapter } from '../../src/adapters/browser-adapter.js';
 import { JobEngine, isTerminal } from '../../src/core/engine.js';
+import { jobStatusSchema } from '../../src/core/schema.js';
 import type { Scheduler } from '../../src/core/scheduler/node-scheduler.js';
 import type { ExecutionPlan, JobStatus, TargetInfo } from '../../src/core/types.js';
 import { FlashActError } from '../../src/utils/errors.js';
 import { createMcpServer } from '../../src/mcp/server.js';
+import { foreground } from '../../src/cli/foreground.js';
+import { mkdtemp, rm, access } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const plan: ExecutionPlan = {
   schemaVersion: '1.0', jobId: 'job', name: 'test', backend: 'playwright',
@@ -121,6 +126,112 @@ async function ownedFixture(trigger: ExecutionPlan['trigger'] = { type: 'SCHEDUL
 }
 
 describe('owned engine scheduling and retention', () => {
+  it('publishes safe timing evidence once and retains late UNKNOWN before unsubscribing', async () => {
+    // Given
+    const { engine, adapter } = await ownedFixture();
+    const observations: JobStatus[] = [];
+    const unsubscribe = engine.subscribe(status => observations.push(status));
+    try {
+      // When
+      adapter.emit({ jobId: 'job', state: 'WAITING', executions: 0, updatedAt: 101 });
+      adapter.emit({ jobId: 'job', state: 'WAITING', executions: 0, updatedAt: 102,
+        timing: { observerEpochMs: 101 }, message: 'page-secret' });
+      adapter.emit({ jobId: 'job', state: 'WAITING', executions: 0, updatedAt: 103, timing: { observerEpochMs: 101 } });
+      adapter.emit({ jobId: 'job', state: 'UNKNOWN', executions: 0, updatedAt: 104 });
+      adapter.emit({ jobId: 'job', state: 'ARMED', executions: 0, updatedAt: 1 });
+      adapter.emit({ jobId: 'job', state: 'VERIFIED', executions: 1, updatedAt: 105 });
+      unsubscribe();
+      adapter.emit({ jobId: 'job', state: 'UNKNOWN', executions: 1, updatedAt: 106, timing: { observerEpochMs: 105 } });
+      // Then
+      expect(observations.map(status => [status.state, status.executions, status.timing])).toEqual([
+        ['WAITING', 0, undefined], ['WAITING', 0, { observerEpochMs: 101 }],
+        ['UNKNOWN', 0, { observerEpochMs: 101 }], ['UNKNOWN', 1, { observerEpochMs: 101 }],
+      ]);
+      expect(observations.every(status => status.message === undefined)).toBe(true);
+    } finally { unsubscribe(); await engine.close(); }
+  });
+
+  it('prints foreground timing and verification events during its single held reconciliation and cleans up', async () => {
+    // Given
+    const home = await mkdtemp(join(tmpdir(), 'flashact-foreground-events-'));
+    vi.stubEnv('FLASHACT_HOME', home);
+    const adapter = new OwnedMemoryAdapter();
+    adapter.heldStatus = deferred<JobStatus>();
+    const engine = new JobEngine({ adapters: { playwright: adapter }, now: () => 100 });
+    const read = vi.spyOn(adapter, 'getStatus');
+    const output = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const controller = new AbortController();
+    const running = foreground(engine, plan, controller.signal);
+    try {
+      await adapter.statusStarted.promise;
+      // When
+      adapter.emit({ jobId: 'job', state: 'DISPATCHED', executions: 1, updatedAt: 101 });
+      adapter.emit({ jobId: 'job', state: 'DISPATCHED', executions: 1, updatedAt: 102, timing: { clickEpochMs: 101 } });
+      adapter.emit({ jobId: 'job', state: 'VERIFIED', executions: 1, updatedAt: 103, timing: { clickEpochMs: 101 } });
+      // Then: synchronous push is observable before the held read completes.
+      const lines = output.mock.calls.map(([line]) => jobStatusSchema.parse(JSON.parse(String(line))));
+      expect(lines.slice(-3)).toMatchObject([
+        { state: 'DISPATCHED', executions: 1 },
+        { state: 'DISPATCHED', timing: { clickEpochMs: 101 } },
+        { state: 'VERIFIED', executions: 1, timing: { clickEpochMs: 101 } },
+      ]);
+      expect(read).toHaveBeenCalledTimes(1);
+      const count = output.mock.calls.length;
+      controller.abort();
+      await engine.close();
+      await running;
+      adapter.emit({ jobId: 'job', state: 'VERIFIED', executions: 1, updatedAt: 104, timing: { observerEpochMs: 104 } });
+      expect(output.mock.calls.length).toBe(count);
+      expect(adapter.listeners.size).toBe(0);
+      expect(adapter.producerEvents).toEqual(['producer-exited', 'sdk-rejected']);
+      await expect(access(join(home, 'engine.json'))).rejects.toMatchObject({ code: 'ENOENT' });
+    } finally {
+      controller.abort(); await engine.close(); await running;
+      output.mockRestore(); vi.unstubAllEnvs(); await rm(home, { recursive: true, force: true });
+    }
+  });
+
+  it('waits on events after initial foreground reconciliation instead of polling and unsubscribes', async () => {
+    // Given
+    const home = await mkdtemp(join(tmpdir(), 'flashact-foreground-idle-'));
+    vi.stubEnv('FLASHACT_HOME', home);
+    const adapter = new OwnedMemoryAdapter();
+    const engine = new JobEngine({ adapters: { playwright: adapter }, now: () => 100 });
+    const subscribe = engine.subscribe.bind(engine);
+    const unsubscribed = vi.fn();
+    vi.spyOn(engine, 'subscribe').mockImplementation(listener => {
+      const dispose = subscribe(listener);
+      return () => { unsubscribed(); dispose(); };
+    });
+    const reconciled = deferred<void>();
+    const output = vi.spyOn(process.stdout, 'write').mockImplementation(line => {
+      const status = jobStatusSchema.parse(JSON.parse(String(line)));
+      if (status.state === 'WAITING') reconciled.resolve();
+      return true;
+    });
+    const read = vi.spyOn(adapter, 'getStatus');
+    const controller = new AbortController();
+    const running = foreground(engine, plan, controller.signal);
+    try {
+      await reconciled.promise;
+      vi.useFakeTimers();
+      // When
+      await vi.advanceTimersByTimeAsync(1000);
+      adapter.emit({ jobId: 'job', state: 'VERIFIED', executions: 1, updatedAt: 101 });
+      // Then
+      expect(read).toHaveBeenCalledTimes(1);
+      expect(jobStatusSchema.parse(JSON.parse(String(output.mock.calls.at(-1)?.[0])))).toMatchObject({ state: 'VERIFIED', executions: 1 });
+      controller.abort();
+      await running;
+      expect(unsubscribed).toHaveBeenCalledTimes(1);
+      expect(adapter.producerEvents).toEqual(['producer-exited']);
+    } finally {
+      vi.useRealTimers(); controller.abort(); await engine.close(); await running;
+      output.mockRestore(); vi.restoreAllMocks(); vi.unstubAllEnvs();
+      await rm(home, { recursive: true, force: true });
+    }
+  });
+
   it('keeps browser expiry authoritative when a host expiry wake finds a waiting runtime', async () => {
     // Given
     const { engine, adapter, scheduler } = await ownedFixture();

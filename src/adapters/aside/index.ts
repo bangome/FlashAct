@@ -3,10 +3,11 @@ import type { AdapterOwner, AsideAdapterOptions, BrowserAdapter } from "../brows
 import type { ExecutionPlan, JobStatus } from "../../core/types.js";
 import { browserTabsSchema } from "../../core/schema.js";
 import { FlashActError } from "../../utils/errors.js";
-import { RuntimeJobs } from "../playwright/runtime-jobs.js";
-import { AsideTransport, ManagedAsideRunner } from "./runner.js";
+import { RuntimeJobs, pending } from "../playwright/runtime-jobs.js";
+import { AsideTransport } from "./runner.js";
 import type { AsideCommandRunner } from "./runner.js";
 import { deadlines, transportStatus } from "../playwright/worker-protocol.js";
+import { AsideSession } from "./session.js";
 
 export type { AsideAdapterOptions } from "../browser-adapter.js";
 export type { AsideCommandRunner } from "./runner.js";
@@ -15,7 +16,7 @@ const asideTabsSchema = z.array(z.object({ targetId: z.string().min(1), url: z.u
 
 export class AsideAdapter implements BrowserAdapter {
   private connected = false;
-  private selected: string | undefined;
+  protected selected: string | undefined;
   private readonly transport: AsideTransport;
   protected readonly jobs: RuntimeJobs;
 
@@ -89,13 +90,13 @@ export class AsideAdapter implements BrowserAdapter {
     if (!this.connected) throw new FlashActError("ADAPTER_ERROR", "Aside adapter is disconnected");
   }
 
-  private selectedId(): string {
+  protected selectedId(): string {
     this.requireConnection();
     if (!this.selected) throw new FlashActError("ADAPTER_ERROR", "No Aside tab selected");
     return this.selected;
   }
 
-  private async evaluateTab(tabId: string, expression: string): Promise<unknown> {
+  protected async evaluateTab(tabId: string, expression: string): Promise<unknown> {
     this.requireConnection();
     return this.transport.repl(`await attachBrowserTab(${JSON.stringify(tabId)}); return await page.evaluate(${JSON.stringify(expression)});`);
   }
@@ -106,8 +107,11 @@ export class OwnedAsideAdapter extends AsideAdapter {
   private sealed = false;
   private stopping: Promise<readonly JobStatus[]> | undefined;
   private disconnecting: Promise<void> | undefined;
-  private readonly managed: ManagedAsideRunner;
+  private readonly managed: AsideSession;
   private readonly operations = new Set<Promise<unknown>>();
+  private readonly readers = new Map<string, AsideSession>();
+  private readonly changes = new Set<Promise<void>>();
+  private readonly optionsForReader: AsideAdapterOptions;
 
   constructor(options: AsideAdapterOptions = {}) {
     if (options.endpoint !== undefined || options.launch || options.headless !== undefined
@@ -115,9 +119,10 @@ export class OwnedAsideAdapter extends AsideAdapter {
       throw new FlashActError("ADAPTER_ERROR", "Owned Aside requires an existing tab through the official CLI");
     }
     let lost: () => void = () => {};
-    const managed = new ManagedAsideRunner(() => lost());
+    const managed = new AsideSession(options, () => lost());
     const listeners = new Set<(status: JobStatus) => void>();
     super(options, managed.run, status => { for (const listener of listeners) listener(transportStatus(status)); });
+    this.optionsForReader = { ...options };
     this.managed = managed;
     this.owner = {
       kind: "aside-client",
@@ -125,8 +130,9 @@ export class OwnedAsideAdapter extends AsideAdapter {
       stop: () => {
         if (this.stopping) return this.stopping;
         this.sealed = true;
-        this.stopping = this.managed.stop().then(async () => {
+        this.stopping = Promise.all([this.managed.stop(), ...[...this.readers.values()].map(reader => reader.stop())]).then(async () => {
           await Promise.allSettled([...this.operations]);
+          await Promise.allSettled([...this.changes]);
           this.jobs.invalidate(undefined, "disconnect");
           this.releaseConnection();
           return this.jobs.snapshot().map(transportStatus);
@@ -159,12 +165,47 @@ export class OwnedAsideAdapter extends AsideAdapter {
     });
   }
   override listTabs() { return this.track(() => super.listTabs()); }
-  override selectTab(tabId: string): Promise<void> { return this.track(() => super.selectTab(tabId)); }
-  override inspectTarget(selector: string) { return this.track(() => super.inspectTarget(selector)); }
+  override selectTab(tabId: string): Promise<void> {
+    return this.track(async () => { if (this.selected !== tabId) await super.selectTab(tabId); });
+  }
+  override inspectTarget(selector: string) {
+    return this.track(() => this.jobs.inspect(this.selectedId(), selector));
+  }
   override installRuntime(plan: ExecutionPlan) { return this.track(() => super.installRuntime(plan)); }
-  override arm(plan: ExecutionPlan): Promise<void> { return this.track(() => super.arm(plan)); }
+  override arm(plan: ExecutionPlan): Promise<void> {
+    return this.track(async () => {
+      await super.arm(plan);
+      if (!this.sealed && this.jobs.snapshot().some(status => status.jobId === plan.jobId && pending(status)))
+        this.observeChanges(plan.jobId);
+    });
+  }
   override evaluate(expression: string): Promise<unknown> { return this.track(() => super.evaluate(expression)); }
   override getStatus(jobId: string): Promise<JobStatus> { return this.track(() => super.getStatus(jobId)).then(transportStatus); }
+  protected override evaluateTab(tabId: string, expression: string): Promise<unknown> {
+    return this.track(() => this.managed.evaluate(tabId, expression));
+  }
+  private observeChanges(jobId: string): void {
+    // Aside serializes REPL calls. A waiting reader must not block cancel/control.
+    const reader = new AsideSession(this.optionsForReader, () => { void this.owner.stop("deadline"); });
+    this.readers.set(jobId, reader);
+    const changed = (async () => {
+      try {
+        while (!this.sealed) {
+          const status = await this.jobs.waitForChange(jobId,
+            (tabId, expression) => reader.evaluate(tabId, expression, 95_000), 85_000);
+          if (!pending(status)) break;
+        }
+      } catch (error) {
+        if (!(error instanceof Error)) throw error;
+        void this.owner.stop("deadline");
+      } finally {
+        await reader.stop();
+        this.readers.delete(jobId);
+      }
+    })();
+    this.changes.add(changed);
+    void changed.then(() => this.changes.delete(changed), () => this.changes.delete(changed));
+  }
   override cancel(jobId: string): Promise<void> {
     return this.track(async () => {
       const timer = setTimeout(() => { void this.owner.stop("cancel"); }, deadlines.grace);

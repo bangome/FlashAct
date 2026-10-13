@@ -1,6 +1,8 @@
 import { expect } from "vitest";
 import { cancelExpression, runtimeSource } from "../../src/runtime/index.js";
 import { arm, clicks, install, plan, status, test, waitState } from "./runtime-fixture.js";
+import { RuntimeJobs } from "../../src/adapters/playwright/runtime-jobs.js";
+import type { JobStatus } from "../../src/core/types.js";
 
 test("returns the same handle for duplicate plans and rejects conflicting IDs", async ({ page }) => {
   // Given
@@ -127,4 +129,39 @@ test("invalidates rather than verifies when a click changes the URL", async ({ p
   expect(result.state).toBe("INVALIDATED");
   expect(result.executions).toBe(1);
   expect(await clicks(page)).toBe(1);
+});
+
+test.for(["VERIFIED", "UNKNOWN"] as const)("pushes delayed %s through the installed reporter without status polling", async (state, { page }) => {
+  // Given
+  let evaluations = 0;
+  let observed: (status: JobStatus) => void = () => undefined;
+  const completed = new Promise<JobStatus>(resolve => { observed = resolve; });
+  const jobs = new RuntimeJobs(async (_tabId, expression) => {
+    evaluations++;
+    return page.evaluate(expression);
+  }, true, result => { if (result.state === state) observed(result); });
+  const receive = (message: { text(): string }) => jobs.receive(message.text());
+  page.on("console", receive);
+  const input = plan({ verification: { selector: "#receipt", timeoutMs: state === "UNKNOWN" ? 80 : 3000 } });
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await jobs.install(input);
+    await jobs.arm(input);
+    const before = evaluations;
+    // When: verification occurs only after the arm task has completed.
+    if (state === "VERIFIED") await page.evaluate(() => {
+      const receipt = document.createElement("span"); receipt.id = "receipt"; document.body.append(receipt);
+    });
+    const result = await Promise.race([completed, new Promise<never>((_resolve, reject) => {
+      timer = setTimeout(() => reject(new Error("Runtime lifecycle event missing")), 3000);
+    })]);
+    // Then
+    expect(result).toMatchObject({ state, executions: 1, timing: { clickEpochMs: expect.any(Number) } });
+    expect(evaluations).toBe(before);
+    expect(jobs.snapshot()).toEqual([result]);
+    expect(await clicks(page)).toBe(1);
+  } finally {
+    if (timer) clearTimeout(timer);
+    page.off("console", receive);
+  }
 });

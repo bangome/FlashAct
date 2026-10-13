@@ -4,18 +4,8 @@ import { jobStatusSchema, runtimeHandleSchema, targetInfoSchema, parsePlan } fro
 import type { ExecutionPlan, JobStatus, RuntimeHandle, TargetInfo } from "../../core/types.js";
 import { inspectExpression, installExpression, runtimeSource, statusExpression } from "../../runtime/index.js";
 import { FlashActError, assertNever } from "../../utils/errors.js";
-
-export function decodeRuntime<T>(value: unknown, schema: z.ZodType<T>): T {
-  try {
-    const decoded: unknown = JSON.parse(z.string().parse(value));
-    return schema.parse(decoded);
-  } catch (error) {
-    if (error instanceof SyntaxError || error instanceof z.ZodError) {
-      throw new FlashActError("INVALID_RESPONSE", "Invalid browser runtime response", { cause: error });
-    }
-    throw error;
-  }
-}
+import { decodeRuntime } from "../../utils/runtime-response.js";
+export { decodeRuntime } from "../../utils/runtime-response.js";
 
 type TrackedJob = {
   readonly tabId: string;
@@ -94,7 +84,17 @@ export class RuntimeJobs {
     const handle = decodeRuntime(await this.evaluateTab(plan.target.tabId, installExpression(plan)), runtimeHandleSchema);
     if (handle.jobId !== plan.jobId) throw new FlashActError("INVALID_RESPONSE", "Runtime returned a different job");
     const token = randomUUID();
-    await this.evaluateTab(plan.target.tabId, `(() => { const runtime = globalThis.__flashactRuntime; const report = () => console.log(${JSON.stringify(this.eventMarker)} + JSON.stringify(runtime.status(${JSON.stringify(plan.jobId)}))); globalThis[${JSON.stringify(this.marker + plan.jobId)}] = { token: ${JSON.stringify(token)}, runtime, cleanup: () => { window.removeEventListener("click", report, true); window.removeEventListener("pagehide", report); } }; window.addEventListener("click", report, true); window.addEventListener("pagehide", report); })()`);
+    await this.evaluateTab(plan.target.tabId, `(() => {
+      const runtime = globalThis.__flashactRuntime;
+      const report = () => console.log(${JSON.stringify(this.eventMarker)} + JSON.stringify(runtime.status(${JSON.stringify(plan.jobId)})));
+      const updated = event => { if (event.detail?.jobId === ${JSON.stringify(plan.jobId)}) report(); };
+      globalThis[${JSON.stringify(this.marker + plan.jobId)}] = { token: ${JSON.stringify(token)}, runtime, cleanup: () => {
+        document.removeEventListener("__flashact_status__", updated);
+        window.removeEventListener("click", report, true); window.removeEventListener("pagehide", report);
+      } };
+      document.addEventListener("__flashact_status__", updated);
+      window.addEventListener("click", report, true); window.addEventListener("pagehide", report);
+    })()`);
     const status = decodeRuntime(await this.evaluateTab(plan.target.tabId, statusExpression(plan.jobId)), jobStatusSchema);
     this.jobs.set(plan.jobId, { tabId: plan.target.tabId, handle, token, status, lost: false, armed: dispatchable(status) });
     this.observation?.(status);
@@ -127,6 +127,54 @@ export class RuntimeJobs {
         return this.requireJob(jobId).status;
       }
       throw error;
+    }
+  }
+
+  async waitForChange(jobId: string, evaluateTab: (tabId: string, expression: string) => Promise<unknown>,
+    leaseMs: number): Promise<JobStatus> {
+    const job = this.requireJob(jobId);
+    if (job.lost || !pending(job.status)) return job.status;
+    const timing = job.status.timing;
+    const previous = JSON.stringify([job.status.state, job.status.executions, timing?.targetEpochMs,
+      timing?.schedulerEpochMs, timing?.receivedEpochMs, timing?.observerEpochMs, timing?.clickEpochMs, timing?.conditionEpochMs]);
+    try {
+      const response = decodeRuntime(await evaluateTab(job.tabId, `new Promise(resolve => {
+        let settled = false; let timer = 0;
+        const read = () => {
+          const installed = globalThis[${JSON.stringify(this.marker + jobId)}];
+          if (!(installed?.token === ${JSON.stringify(job.token)}
+            && installed.runtime === globalThis.__flashactRuntime
+            && installed.runtime?.documentId === ${JSON.stringify(job.handle.documentId)}))
+            return JSON.stringify({ current: false });
+          return JSON.stringify({ current: true, status: installed.runtime.status(${JSON.stringify(jobId)}) });
+        };
+        const finish = value => {
+          if (settled) return; settled = true; clearTimeout(timer);
+          document.removeEventListener("__flashact_status__", changed);
+          window.removeEventListener("pagehide", expired);
+          resolve(value);
+        };
+        const inspect = () => {
+          const value = read(); const result = JSON.parse(value);
+          const status = result.status; const timing = status?.timing;
+          const evidence = status && JSON.stringify([status.state, status.executions, timing?.targetEpochMs,
+            timing?.schedulerEpochMs, timing?.receivedEpochMs, timing?.observerEpochMs, timing?.clickEpochMs, timing?.conditionEpochMs]);
+          if (!result.current || evidence !== ${JSON.stringify(previous)}) finish(value);
+        };
+        const changed = event => { if (event.detail?.jobId === ${JSON.stringify(jobId)}) inspect(); };
+        const expired = () => finish(read());
+        document.addEventListener("__flashact_status__", changed);
+        window.addEventListener("pagehide", expired);
+        timer = window.setTimeout(expired, ${leaseMs});
+        inspect();
+      })`), commandResponseSchema);
+      if (!response.current) { this.invalidate(job.tabId, "document"); return this.requireJob(jobId).status; }
+      if (response.status.jobId !== jobId) throw new FlashActError("INVALID_RESPONSE", "Change read returned a different job");
+      return this.retain(jobId, response.status);
+    } catch (error) {
+      if (!(error instanceof Error) || (error instanceof FlashActError && error.code === "INVALID_RESPONSE")) throw error;
+      this.invalidate(job.tabId, "document");
+      return this.requireJob(jobId).status;
     }
   }
 

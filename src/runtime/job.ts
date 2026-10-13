@@ -23,6 +23,7 @@ export function createJob(plan: ExecutionPlan, services: JobServices) {
   function update(state: JobState, message?: string): JobStatus {
     result = { jobId: plan.jobId, state, executions: result.executions, updatedAt: Date.now(), timing: { ...timing },
       ...(message === undefined ? {} : { message }) };
+    document.dispatchEvent(new CustomEvent("__flashact_status__", { detail: { jobId: plan.jobId } }));
     return result;
   }
   function finish(state: JobState, message: string): JobStatus {

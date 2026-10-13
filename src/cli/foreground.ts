@@ -1,4 +1,3 @@
-import { setTimeout } from 'node:timers/promises';
 import type { JobEngine } from '../core/engine.js';
 import type { ExecutionPlan, JobStatus } from '../core/types.js';
 import { startControlServer } from './ipc.js';
@@ -49,26 +48,32 @@ export async function runEngineLifetime(engine: JobEngine, action: (signal: Abor
 
 export async function foreground(engine: JobEngine, plan: ExecutionPlan, signal: AbortSignal): Promise<void> {
   let control: Awaited<ReturnType<typeof startControlServer>> | undefined;
+  let unsubscribe: (() => void) | undefined;
   const stopAdmission = () => control?.stopAdmission();
   signal.addEventListener('abort', stopAdmission, { once: true });
   try {
     if (signal.aborted) return;
     control = await startControlServer(engine);
     if (signal.aborted) return;
-    printStatus(await engine.createJob(plan));
-    printStatus(await engine.validateJob(plan.jobId));
-    if (signal.aborted) return;
-    printStatus(await engine.armJob(plan.jobId));
     let previous = '';
-    while (!signal.aborted) {
-      const status = await engine.getStatus(plan.jobId);
+    const report = (status: JobStatus) => {
+      if (status.jobId !== plan.jobId) return;
       const evidence = JSON.stringify({ state: status.state, executions: status.executions,
         execution: status.execution, timing: status.timing });
       if (evidence !== previous) { printStatus(status); previous = evidence; }
-      try { await setTimeout(100, undefined, { signal }); }
-      catch (error) { if (!(error instanceof Error && error.name === 'AbortError')) throw error; }
-    }
+    };
+    unsubscribe = engine.subscribe(report);
+    await engine.createJob(plan);
+    await engine.validateJob(plan.jobId);
+    if (signal.aborted) return;
+    await engine.armJob(plan.jobId);
+    // Reconcile once for cooperative/held producers; owned observations report independently.
+    report(await engine.getStatus(plan.jobId));
+    if (!signal.aborted) await new Promise<void>(resolve => {
+      signal.addEventListener('abort', () => resolve(), { once: true });
+    });
   } finally {
+    unsubscribe?.();
     try { await engine.close(); }
     finally { try { await control?.close(); } finally { signal.removeEventListener('abort', stopAdmission); } }
   }

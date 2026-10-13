@@ -106,9 +106,10 @@ async function controlled() {
     },
   };
   let observer: RuntimeJobs | undefined;
-  const realm = { __flashactRuntime: runtime, window: new EventTarget(),
+  const realm = { __flashactRuntime: runtime, window: new EventTarget(), document: new EventTarget(),
     console: { log: (text: string) => { observer?.receive(text); } } };
   const expressions: string[] = [];
+  const observations: JobStatus[] = [];
   const jobs = new RuntimeJobs(async (_tabId, expression) => {
     expressions.push(expression);
     called = undefined;
@@ -120,10 +121,11 @@ async function controlled() {
       return response.promise;
     }
     return value;
-  });
+  }, true, status => observations.push(status));
   observer = jobs;
   await jobs.install(plan);
-  return { jobs, realm, expressions, started, response,
+  return { jobs, realm, expressions, observations, started, response,
+    update(status: JobStatus) { current = status; realm.document.dispatchEvent(new CustomEvent("__flashact_status__", { detail: { jobId: status.jobId } })); },
     hold(method: "wake" | "status") { hold = method; },
     ready() { ready = true; },
     release() { response.resolve(captured); },
@@ -227,4 +229,43 @@ it("forwards locally retained late execution independently of held command repli
   // Then
   expect(observations.at(-1)).toMatchObject({ state: "UNKNOWN", executions: 1 });
   expect(jobs.snapshot()).toEqual([observations.at(-1)]);
+});
+
+it("reports delayed verification from document events on the captured runtime", async () => {
+  // Given
+  const fixture = await controlled();
+  await fixture.jobs.arm(plan);
+  fixture.realm.__flashactRuntime = { ...fixture.realm.__flashactRuntime,
+    status: (): JobStatus => ({ jobId: plan.jobId, state: "FAILED", executions: 0, updatedAt: 99 }) };
+  const before = fixture.expressions.length;
+  // When
+  fixture.update({ jobId: plan.jobId, state: "VERIFIED", executions: 1, updatedAt: 5, timing: { clickEpochMs: 4 } });
+  // Then
+  expect(fixture.observations.at(-1)).toMatchObject({ state: "VERIFIED", executions: 1, timing: { clickEpochMs: 4 } });
+  expect(fixture.expressions.length).toBe(before);
+});
+
+it("retains UNKNOWN against stale and late document verification events", async () => {
+  // Given
+  const fixture = await controlled();
+  await fixture.jobs.arm(plan);
+  fixture.jobs.invalidate(undefined, "disconnect");
+  // When
+  fixture.update({ jobId: plan.jobId, state: "WAITING", executions: 0, updatedAt: 2 });
+  fixture.update({ jobId: plan.jobId, state: "VERIFIED", executions: 1, updatedAt: 5 });
+  // Then
+  expect(fixture.observations.at(-1)).toMatchObject({ state: "UNKNOWN", executions: 1 });
+  expect(await fixture.jobs.status(plan.jobId)).toMatchObject({ state: "UNKNOWN", executions: 1 });
+});
+
+it("removes the document reporter after confirmed command cleanup", async () => {
+  // Given
+  const fixture = await controlled();
+  await fixture.jobs.arm(plan);
+  await fixture.jobs.cancel(plan.jobId);
+  const before = fixture.observations.length;
+  // When
+  fixture.update({ jobId: plan.jobId, state: "VERIFIED", executions: 1, updatedAt: 5 });
+  // Then
+  expect(fixture.observations.length).toBe(before);
 });

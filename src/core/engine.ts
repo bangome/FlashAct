@@ -80,10 +80,12 @@ function permitsMissing(trigger: Trigger, selector: string): boolean {
 }
 
 /** Host wakes only request readiness; the injected runtime owns guards and dispatch. */
+// allow: SIZE_OK - Admission, retention and owner teardown share one lifecycle state machine.
 export class JobEngine {
   private readonly jobs = new Map<string, Job>();
   private readonly connections = new Map<Backend, Connection>();
   private readonly events: JobStatus[] = [];
+  private readonly listeners = new Set<(status: JobStatus) => void>();
   private readonly operations = new Set<Promise<unknown>>();
   private readonly cleanupErrors: unknown[] = [];
   private queue: Promise<unknown> = Promise.resolve();
@@ -97,6 +99,17 @@ export class JobEngine {
   }
 
   get defaultScheduling(): ExecutionInfo['requested'] { return this.options.scheduling ?? 'browser'; }
+
+  subscribe(listener: (status: JobStatus) => void): () => void {
+    this.listeners.add(listener);
+    return () => { this.listeners.delete(listener); };
+  }
+
+  private emit(status: JobStatus): void {
+    this.events.push(status);
+    if (this.events.length > 1000) this.events.shift();
+    for (const listener of this.listeners) listener(status);
+  }
 
   capabilities(): readonly BackendCapabilities[] {
     return (['playwright', 'aside'] as const).map<BackendCapabilities>(backend => {
@@ -142,14 +155,12 @@ export class JobEngine {
     const safe: JobStatus = { jobId: job.plan.jobId, state, executions,
       updatedAt: Math.max(previous.updatedAt, status.updatedAt),
       ...(timing ? { timing } : {}), ...(job.execution ? { execution: job.execution } : {}) };
-    if (previous.state !== state || previous.executions !== executions) {
-      // Deliberately omit free-form runtime messages: they may contain page data or URLs.
-      this.events.push({ jobId: safe.jobId, state, executions, updatedAt: safe.updatedAt,
-        ...(job.execution ? { execution: job.execution } : {}) });
-      if (this.events.length > 1000) this.events.shift();
-    }
     job.status = safe;
     if (isTerminal(state) || state === 'DISPATCHED') this.disarm(job);
+    // Timestamp-only reads are not evidence; page messages never enter the projection.
+    if (previous.state !== state || previous.executions !== executions ||
+        JSON.stringify(previous.execution) !== JSON.stringify(safe.execution) ||
+        JSON.stringify(previous.timing) !== JSON.stringify(safe.timing)) this.emit(safe);
     return safe;
   }
 
@@ -309,7 +320,7 @@ export class JobEngine {
       const status: JobStatus = { jobId: plan.jobId, state: 'DRAFT', executions: 0, updatedAt: this.now() };
       this.jobs.set(plan.jobId, { plan, status, installed: false, armSent: false, stopRequested: false,
         schedules: new Set(), operations: new Set() });
-      this.events.push(status);
+      this.emit(status);
       return status;
     });
   }
