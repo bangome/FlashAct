@@ -1,0 +1,3641 @@
+{
+  "status": "VISIBLE VERIFIED",
+  "scope": "VISIBLE ONLY",
+  "startedAt": "2026-10-12T10:55:35.287Z",
+  "command": "node scripts/visible-latency-benchmark.mjs",
+  "childReportPath": "/Users/bogyung/FlashAct/artifacts/benchmark/visible-latency.json",
+  "nodeVersion": "v22.22.2",
+  "launchOptions": {
+    "headless": false,
+    "timeout": 15000,
+    "ignoreDefaultArgs": [
+      "--disable-background-timer-throttling",
+      "--disable-renderer-backgrounding",
+      "--disable-backgrounding-occluded-windows"
+    ]
+  },
+  "requestedLaunchArguments": [],
+  "fullLaunchArguments": null,
+  "flagDisclosure": "Requested ignore flags match native probe. Remaining defaults are not stock Chrome; actual complete arguments may be unavailable.",
+  "runtimeSha256": "769c2a5ffccd595d014de36c74c9a132019696f04cb311dd37c59e64ff16a391",
+  "matrix": [
+    {
+      "scenario": "scheduled",
+      "horizonMs": 12,
+      "trials": 10
+    },
+    {
+      "scenario": "scheduled",
+      "horizonMs": 1000,
+      "trials": 5
+    },
+    {
+      "scenario": "scheduled",
+      "horizonMs": 8000,
+      "trials": 5
+    },
+    {
+      "scenario": "reactive",
+      "horizonMs": 1000,
+      "trials": 5
+    }
+  ],
+  "plannedMatrixTrials": 50,
+  "plannedVisibleTrials": 25,
+  "completedVisibleTrials": 25,
+  "hiddenRows": {
+    "status": "NOT VERIFIED",
+    "completedTrials": 0,
+    "skippedPlannedTrials": 25,
+    "reference": "artifacts/benchmark/hidden-state-probe.json",
+    "nativeGate": "BLOCKED"
+  },
+  "normalPlannedWaitMs": 50120,
+  "watchdogMs": 150000,
+  "samples": [
+    {
+      "scenario": "scheduled",
+      "horizonMs": 12,
+      "trialIndex": 0,
+      "jobId": "visible-cb4b061a-3d2d-46a5-b15b-d0058599ec37",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-cb4b061a-3d2d-46a5-b15b-d0058599ec37",
+          "epochMs": 1791802536718.7,
+          "wallMs": 1791802536718,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802536705.1,
+        "wallMs": 1791802536705,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802536705.2,
+        "wallEpochMs": 1791802536705,
+        "afterPageEpochMs": 1791802536705.2
+      },
+      "targetWallEpochMs": 1791802536717,
+      "targetEpochMs": 1791802536717.2,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-cb4b061a-3d2d-46a5-b15b-d0058599ec37",
+        "name": "visible-cb4b061a-3d2d-46a5-b15b-d0058599ec37",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "SCHEDULED",
+          "at": 1791802536717
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802539717,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-cb4b061a-3d2d-46a5-b15b-d0058599ec37",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802536714.8,
+        "wallMs": 1791802536714,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-cb4b061a-3d2d-46a5-b15b-d0058599ec37",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802536715,
+        "timing": {
+          "receivedEpochMs": 1791802536714.9001,
+          "targetEpochMs": 1791802536717
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802536715.2,
+        "wallMs": 1791802536715,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "collectionDeadlineEpochMs": 1791802540717.2,
+      "status": {
+        "jobId": "visible-cb4b061a-3d2d-46a5-b15b-d0058599ec37",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802536719,
+        "timing": {
+          "receivedEpochMs": 1791802536714.9001,
+          "targetEpochMs": 1791802536717,
+          "observerEpochMs": 1791802536715.3,
+          "schedulerEpochMs": 1791802536717.7,
+          "conditionEpochMs": 1791802536717.8,
+          "clickEpochMs": 1791802536718.7
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802536721.3,
+        "wallMs": 1791802536721,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": null,
+      "E1": null,
+      "E2": 1791802536718.7,
+      "actualStimulusLatenessMs": null,
+      "latencyMs": 1.5,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-cb4b061a-3d2d-46a5-b15b-d0058599ec37",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802536719,
+        "timing": {
+          "receivedEpochMs": 1791802536714.9001,
+          "targetEpochMs": 1791802536717,
+          "observerEpochMs": 1791802536715.3,
+          "schedulerEpochMs": 1791802536717.7,
+          "conditionEpochMs": 1791802536717.8,
+          "clickEpochMs": 1791802536718.7
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "scheduled",
+      "horizonMs": 12,
+      "trialIndex": 1,
+      "jobId": "visible-5dbba910-a40a-4123-a9d8-03443e39f967",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-5dbba910-a40a-4123-a9d8-03443e39f967",
+          "epochMs": 1791802536742.9001,
+          "wallMs": 1791802536742,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802536730.4001,
+        "wallMs": 1791802536730,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802536730.4001,
+        "wallEpochMs": 1791802536730,
+        "afterPageEpochMs": 1791802536730.4001
+      },
+      "targetWallEpochMs": 1791802536742,
+      "targetEpochMs": 1791802536742.4001,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-5dbba910-a40a-4123-a9d8-03443e39f967",
+        "name": "visible-5dbba910-a40a-4123-a9d8-03443e39f967",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "SCHEDULED",
+          "at": 1791802536742
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802539742,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-5dbba910-a40a-4123-a9d8-03443e39f967",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802536730.5,
+        "wallMs": 1791802536730,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-5dbba910-a40a-4123-a9d8-03443e39f967",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802536730,
+        "timing": {
+          "receivedEpochMs": 1791802536730.5,
+          "targetEpochMs": 1791802536742
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802536730.6,
+        "wallMs": 1791802536730,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "collectionDeadlineEpochMs": 1791802540742.4001,
+      "status": {
+        "jobId": "visible-5dbba910-a40a-4123-a9d8-03443e39f967",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802536743,
+        "timing": {
+          "receivedEpochMs": 1791802536730.5,
+          "targetEpochMs": 1791802536742,
+          "observerEpochMs": 1791802536732.4001,
+          "schedulerEpochMs": 1791802536742.8,
+          "conditionEpochMs": 1791802536742.8,
+          "clickEpochMs": 1791802536742.9001
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802536749.8,
+        "wallMs": 1791802536749,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": null,
+      "E1": null,
+      "E2": 1791802536742.9001,
+      "actualStimulusLatenessMs": null,
+      "latencyMs": 0.5,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-5dbba910-a40a-4123-a9d8-03443e39f967",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802536743,
+        "timing": {
+          "receivedEpochMs": 1791802536730.5,
+          "targetEpochMs": 1791802536742,
+          "observerEpochMs": 1791802536732.4001,
+          "schedulerEpochMs": 1791802536742.8,
+          "conditionEpochMs": 1791802536742.8,
+          "clickEpochMs": 1791802536742.9001
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "scheduled",
+      "horizonMs": 12,
+      "trialIndex": 2,
+      "jobId": "visible-40c34390-33c2-445b-9a05-76e17c92fe39",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-40c34390-33c2-445b-9a05-76e17c92fe39",
+          "epochMs": 1791802536765.6,
+          "wallMs": 1791802536765,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802536752.5,
+        "wallMs": 1791802536752,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802536752.6,
+        "wallEpochMs": 1791802536752,
+        "afterPageEpochMs": 1791802536752.6
+      },
+      "targetWallEpochMs": 1791802536764,
+      "targetEpochMs": 1791802536764.6,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-40c34390-33c2-445b-9a05-76e17c92fe39",
+        "name": "visible-40c34390-33c2-445b-9a05-76e17c92fe39",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "SCHEDULED",
+          "at": 1791802536764
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802539764,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-40c34390-33c2-445b-9a05-76e17c92fe39",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802536752.6,
+        "wallMs": 1791802536752,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-40c34390-33c2-445b-9a05-76e17c92fe39",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802536752,
+        "timing": {
+          "receivedEpochMs": 1791802536752.6,
+          "targetEpochMs": 1791802536764
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802536752.7,
+        "wallMs": 1791802536752,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "collectionDeadlineEpochMs": 1791802540764.6,
+      "status": {
+        "jobId": "visible-40c34390-33c2-445b-9a05-76e17c92fe39",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802536765,
+        "timing": {
+          "receivedEpochMs": 1791802536752.6,
+          "targetEpochMs": 1791802536764,
+          "observerEpochMs": 1791802536752.8,
+          "schedulerEpochMs": 1791802536765.3,
+          "conditionEpochMs": 1791802536765.4001,
+          "clickEpochMs": 1791802536765.6
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802536771.3,
+        "wallMs": 1791802536771,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": null,
+      "E1": null,
+      "E2": 1791802536765.6,
+      "actualStimulusLatenessMs": null,
+      "latencyMs": 1,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-40c34390-33c2-445b-9a05-76e17c92fe39",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802536765,
+        "timing": {
+          "receivedEpochMs": 1791802536752.6,
+          "targetEpochMs": 1791802536764,
+          "observerEpochMs": 1791802536752.8,
+          "schedulerEpochMs": 1791802536765.3,
+          "conditionEpochMs": 1791802536765.4001,
+          "clickEpochMs": 1791802536765.6
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "scheduled",
+      "horizonMs": 12,
+      "trialIndex": 3,
+      "jobId": "visible-60634a65-2223-4a53-848e-aca3e282aefa",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-60634a65-2223-4a53-848e-aca3e282aefa",
+          "epochMs": 1791802536788,
+          "wallMs": 1791802536788,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802536774.2,
+        "wallMs": 1791802536774,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802536774.2,
+        "wallEpochMs": 1791802536774,
+        "afterPageEpochMs": 1791802536774.2
+      },
+      "targetWallEpochMs": 1791802536786,
+      "targetEpochMs": 1791802536786.2,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-60634a65-2223-4a53-848e-aca3e282aefa",
+        "name": "visible-60634a65-2223-4a53-848e-aca3e282aefa",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "SCHEDULED",
+          "at": 1791802536786
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802539786,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-60634a65-2223-4a53-848e-aca3e282aefa",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802536774.3,
+        "wallMs": 1791802536774,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-60634a65-2223-4a53-848e-aca3e282aefa",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802536774,
+        "timing": {
+          "receivedEpochMs": 1791802536774.3,
+          "targetEpochMs": 1791802536786
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802536774.9001,
+        "wallMs": 1791802536774,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "collectionDeadlineEpochMs": 1791802540786.2,
+      "status": {
+        "jobId": "visible-60634a65-2223-4a53-848e-aca3e282aefa",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802536788,
+        "timing": {
+          "receivedEpochMs": 1791802536774.3,
+          "targetEpochMs": 1791802536786,
+          "observerEpochMs": 1791802536780.9001,
+          "schedulerEpochMs": 1791802536787.8,
+          "conditionEpochMs": 1791802536787.8,
+          "clickEpochMs": 1791802536788
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802536793.8,
+        "wallMs": 1791802536793,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": null,
+      "E1": null,
+      "E2": 1791802536788,
+      "actualStimulusLatenessMs": null,
+      "latencyMs": 1.800048828125,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-60634a65-2223-4a53-848e-aca3e282aefa",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802536788,
+        "timing": {
+          "receivedEpochMs": 1791802536774.3,
+          "targetEpochMs": 1791802536786,
+          "observerEpochMs": 1791802536780.9001,
+          "schedulerEpochMs": 1791802536787.8,
+          "conditionEpochMs": 1791802536787.8,
+          "clickEpochMs": 1791802536788
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "scheduled",
+      "horizonMs": 12,
+      "trialIndex": 4,
+      "jobId": "visible-a11d583d-459a-4fa1-ab04-d766821ec7b3",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-a11d583d-459a-4fa1-ab04-d766821ec7b3",
+          "epochMs": 1791802536808.5,
+          "wallMs": 1791802536808,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802536796.7,
+        "wallMs": 1791802536796,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802536796.7,
+        "wallEpochMs": 1791802536796,
+        "afterPageEpochMs": 1791802536796.7
+      },
+      "targetWallEpochMs": 1791802536808,
+      "targetEpochMs": 1791802536808.7,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-a11d583d-459a-4fa1-ab04-d766821ec7b3",
+        "name": "visible-a11d583d-459a-4fa1-ab04-d766821ec7b3",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "SCHEDULED",
+          "at": 1791802536808
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802539808,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-a11d583d-459a-4fa1-ab04-d766821ec7b3",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802536796.8,
+        "wallMs": 1791802536796,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-a11d583d-459a-4fa1-ab04-d766821ec7b3",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802536796,
+        "timing": {
+          "receivedEpochMs": 1791802536796.8,
+          "targetEpochMs": 1791802536808
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802536796.8,
+        "wallMs": 1791802536796,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "collectionDeadlineEpochMs": 1791802540808.7,
+      "status": {
+        "jobId": "visible-a11d583d-459a-4fa1-ab04-d766821ec7b3",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802536808,
+        "timing": {
+          "receivedEpochMs": 1791802536796.8,
+          "targetEpochMs": 1791802536808,
+          "observerEpochMs": 1791802536798.1,
+          "schedulerEpochMs": 1791802536808.4001,
+          "conditionEpochMs": 1791802536808.4001,
+          "clickEpochMs": 1791802536808.5
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802536815.9001,
+        "wallMs": 1791802536815,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": null,
+      "E1": null,
+      "E2": 1791802536808.5,
+      "actualStimulusLatenessMs": null,
+      "latencyMs": -0.199951171875,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-a11d583d-459a-4fa1-ab04-d766821ec7b3",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802536808,
+        "timing": {
+          "receivedEpochMs": 1791802536796.8,
+          "targetEpochMs": 1791802536808,
+          "observerEpochMs": 1791802536798.1,
+          "schedulerEpochMs": 1791802536808.4001,
+          "conditionEpochMs": 1791802536808.4001,
+          "clickEpochMs": 1791802536808.5
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "scheduled",
+      "horizonMs": 12,
+      "trialIndex": 5,
+      "jobId": "visible-2aedab7e-e6c1-482d-80c3-d69ada27984f",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-2aedab7e-e6c1-482d-80c3-d69ada27984f",
+          "epochMs": 1791802536830.5,
+          "wallMs": 1791802536830,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802536818.4001,
+        "wallMs": 1791802536818,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802536818.4001,
+        "wallEpochMs": 1791802536818,
+        "afterPageEpochMs": 1791802536818.4001
+      },
+      "targetWallEpochMs": 1791802536830,
+      "targetEpochMs": 1791802536830.4001,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-2aedab7e-e6c1-482d-80c3-d69ada27984f",
+        "name": "visible-2aedab7e-e6c1-482d-80c3-d69ada27984f",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "SCHEDULED",
+          "at": 1791802536830
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802539830,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-2aedab7e-e6c1-482d-80c3-d69ada27984f",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802536818.5,
+        "wallMs": 1791802536818,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-2aedab7e-e6c1-482d-80c3-d69ada27984f",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802536818,
+        "timing": {
+          "receivedEpochMs": 1791802536818.5,
+          "targetEpochMs": 1791802536830
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802536818.9001,
+        "wallMs": 1791802536818,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "collectionDeadlineEpochMs": 1791802540830.4001,
+      "status": {
+        "jobId": "visible-2aedab7e-e6c1-482d-80c3-d69ada27984f",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802536830,
+        "timing": {
+          "receivedEpochMs": 1791802536818.5,
+          "targetEpochMs": 1791802536830,
+          "observerEpochMs": 1791802536819,
+          "schedulerEpochMs": 1791802536830.4001,
+          "conditionEpochMs": 1791802536830.4001,
+          "clickEpochMs": 1791802536830.5
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802536838.2,
+        "wallMs": 1791802536838,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": null,
+      "E1": null,
+      "E2": 1791802536830.5,
+      "actualStimulusLatenessMs": null,
+      "latencyMs": 0.099853515625,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-2aedab7e-e6c1-482d-80c3-d69ada27984f",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802536830,
+        "timing": {
+          "receivedEpochMs": 1791802536818.5,
+          "targetEpochMs": 1791802536830,
+          "observerEpochMs": 1791802536819,
+          "schedulerEpochMs": 1791802536830.4001,
+          "conditionEpochMs": 1791802536830.4001,
+          "clickEpochMs": 1791802536830.5
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "scheduled",
+      "horizonMs": 12,
+      "trialIndex": 6,
+      "jobId": "visible-36033093-63f6-4196-a691-9a3e873c9280",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-36033093-63f6-4196-a691-9a3e873c9280",
+          "epochMs": 1791802536861,
+          "wallMs": 1791802536861,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802536848,
+        "wallMs": 1791802536848,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802536848.1,
+        "wallEpochMs": 1791802536848,
+        "afterPageEpochMs": 1791802536848.1
+      },
+      "targetWallEpochMs": 1791802536860,
+      "targetEpochMs": 1791802536860.1,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-36033093-63f6-4196-a691-9a3e873c9280",
+        "name": "visible-36033093-63f6-4196-a691-9a3e873c9280",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "SCHEDULED",
+          "at": 1791802536860
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802539860,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-36033093-63f6-4196-a691-9a3e873c9280",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802536848.1,
+        "wallMs": 1791802536848,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-36033093-63f6-4196-a691-9a3e873c9280",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802536848,
+        "timing": {
+          "receivedEpochMs": 1791802536848.1,
+          "targetEpochMs": 1791802536860
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802536848.2,
+        "wallMs": 1791802536848,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "collectionDeadlineEpochMs": 1791802540860.1,
+      "status": {
+        "jobId": "visible-36033093-63f6-4196-a691-9a3e873c9280",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802536861,
+        "timing": {
+          "receivedEpochMs": 1791802536848.1,
+          "targetEpochMs": 1791802536860,
+          "observerEpochMs": 1791802536848.4001,
+          "schedulerEpochMs": 1791802536860.9001,
+          "conditionEpochMs": 1791802536860.9001,
+          "clickEpochMs": 1791802536861
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802536866.4001,
+        "wallMs": 1791802536866,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": null,
+      "E1": null,
+      "E2": 1791802536861,
+      "actualStimulusLatenessMs": null,
+      "latencyMs": 0.89990234375,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-36033093-63f6-4196-a691-9a3e873c9280",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802536861,
+        "timing": {
+          "receivedEpochMs": 1791802536848.1,
+          "targetEpochMs": 1791802536860,
+          "observerEpochMs": 1791802536848.4001,
+          "schedulerEpochMs": 1791802536860.9001,
+          "conditionEpochMs": 1791802536860.9001,
+          "clickEpochMs": 1791802536861
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "scheduled",
+      "horizonMs": 12,
+      "trialIndex": 7,
+      "jobId": "visible-1aae8ad6-1c27-4461-9f6b-d89a348dd7aa",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-1aae8ad6-1c27-4461-9f6b-d89a348dd7aa",
+          "epochMs": 1791802536881.8,
+          "wallMs": 1791802536881,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802536869,
+        "wallMs": 1791802536869,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802536869,
+        "wallEpochMs": 1791802536869,
+        "afterPageEpochMs": 1791802536869
+      },
+      "targetWallEpochMs": 1791802536881,
+      "targetEpochMs": 1791802536881,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-1aae8ad6-1c27-4461-9f6b-d89a348dd7aa",
+        "name": "visible-1aae8ad6-1c27-4461-9f6b-d89a348dd7aa",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "SCHEDULED",
+          "at": 1791802536881
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802539881,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-1aae8ad6-1c27-4461-9f6b-d89a348dd7aa",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802536869,
+        "wallMs": 1791802536869,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-1aae8ad6-1c27-4461-9f6b-d89a348dd7aa",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802536869,
+        "timing": {
+          "receivedEpochMs": 1791802536869,
+          "targetEpochMs": 1791802536881
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802536869.1,
+        "wallMs": 1791802536869,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "collectionDeadlineEpochMs": 1791802540881,
+      "status": {
+        "jobId": "visible-1aae8ad6-1c27-4461-9f6b-d89a348dd7aa",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802536881,
+        "timing": {
+          "receivedEpochMs": 1791802536869,
+          "targetEpochMs": 1791802536881,
+          "observerEpochMs": 1791802536869.3,
+          "schedulerEpochMs": 1791802536881.6,
+          "conditionEpochMs": 1791802536881.6,
+          "clickEpochMs": 1791802536881.8
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802536887.7,
+        "wallMs": 1791802536887,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": null,
+      "E1": null,
+      "E2": 1791802536881.8,
+      "actualStimulusLatenessMs": null,
+      "latencyMs": 0.800048828125,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-1aae8ad6-1c27-4461-9f6b-d89a348dd7aa",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802536881,
+        "timing": {
+          "receivedEpochMs": 1791802536869,
+          "targetEpochMs": 1791802536881,
+          "observerEpochMs": 1791802536869.3,
+          "schedulerEpochMs": 1791802536881.6,
+          "conditionEpochMs": 1791802536881.6,
+          "clickEpochMs": 1791802536881.8
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "scheduled",
+      "horizonMs": 12,
+      "trialIndex": 8,
+      "jobId": "visible-90fe6395-4830-4e7e-a06d-8a6fbd7522c1",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-90fe6395-4830-4e7e-a06d-8a6fbd7522c1",
+          "epochMs": 1791802536902.8,
+          "wallMs": 1791802536902,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802536890.6,
+        "wallMs": 1791802536890,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802536890.6,
+        "wallEpochMs": 1791802536890,
+        "afterPageEpochMs": 1791802536890.6
+      },
+      "targetWallEpochMs": 1791802536902,
+      "targetEpochMs": 1791802536902.6,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-90fe6395-4830-4e7e-a06d-8a6fbd7522c1",
+        "name": "visible-90fe6395-4830-4e7e-a06d-8a6fbd7522c1",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "SCHEDULED",
+          "at": 1791802536902
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802539902,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-90fe6395-4830-4e7e-a06d-8a6fbd7522c1",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802536890.8,
+        "wallMs": 1791802536890,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-90fe6395-4830-4e7e-a06d-8a6fbd7522c1",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802536890,
+        "timing": {
+          "receivedEpochMs": 1791802536890.8,
+          "targetEpochMs": 1791802536902
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802536890.8,
+        "wallMs": 1791802536890,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "collectionDeadlineEpochMs": 1791802540902.6,
+      "status": {
+        "jobId": "visible-90fe6395-4830-4e7e-a06d-8a6fbd7522c1",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802536902,
+        "timing": {
+          "receivedEpochMs": 1791802536890.8,
+          "targetEpochMs": 1791802536902,
+          "observerEpochMs": 1791802536898,
+          "schedulerEpochMs": 1791802536902.7,
+          "conditionEpochMs": 1791802536902.7,
+          "clickEpochMs": 1791802536902.8
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802536909.2,
+        "wallMs": 1791802536909,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": null,
+      "E1": null,
+      "E2": 1791802536902.8,
+      "actualStimulusLatenessMs": null,
+      "latencyMs": 0.199951171875,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-90fe6395-4830-4e7e-a06d-8a6fbd7522c1",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802536902,
+        "timing": {
+          "receivedEpochMs": 1791802536890.8,
+          "targetEpochMs": 1791802536902,
+          "observerEpochMs": 1791802536898,
+          "schedulerEpochMs": 1791802536902.7,
+          "conditionEpochMs": 1791802536902.7,
+          "clickEpochMs": 1791802536902.8
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "scheduled",
+      "horizonMs": 12,
+      "trialIndex": 9,
+      "jobId": "visible-8c12f601-44da-49f9-b0b4-c08efb60192a",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-8c12f601-44da-49f9-b0b4-c08efb60192a",
+          "epochMs": 1791802536924.6,
+          "wallMs": 1791802536924,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802536911.7,
+        "wallMs": 1791802536911,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802536911.7,
+        "wallEpochMs": 1791802536911,
+        "afterPageEpochMs": 1791802536911.7
+      },
+      "targetWallEpochMs": 1791802536923,
+      "targetEpochMs": 1791802536923.7,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-8c12f601-44da-49f9-b0b4-c08efb60192a",
+        "name": "visible-8c12f601-44da-49f9-b0b4-c08efb60192a",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "SCHEDULED",
+          "at": 1791802536923
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802539923,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-8c12f601-44da-49f9-b0b4-c08efb60192a",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802536911.8,
+        "wallMs": 1791802536911,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-8c12f601-44da-49f9-b0b4-c08efb60192a",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802536911,
+        "timing": {
+          "receivedEpochMs": 1791802536911.8,
+          "targetEpochMs": 1791802536923
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802536911.8,
+        "wallMs": 1791802536911,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "collectionDeadlineEpochMs": 1791802540923.7,
+      "status": {
+        "jobId": "visible-8c12f601-44da-49f9-b0b4-c08efb60192a",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802536924,
+        "timing": {
+          "receivedEpochMs": 1791802536911.8,
+          "targetEpochMs": 1791802536923,
+          "observerEpochMs": 1791802536914.8,
+          "schedulerEpochMs": 1791802536924.5,
+          "conditionEpochMs": 1791802536924.5,
+          "clickEpochMs": 1791802536924.6
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802536931,
+        "wallMs": 1791802536931,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": null,
+      "E1": null,
+      "E2": 1791802536924.6,
+      "actualStimulusLatenessMs": null,
+      "latencyMs": 0.900146484375,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-8c12f601-44da-49f9-b0b4-c08efb60192a",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802536924,
+        "timing": {
+          "receivedEpochMs": 1791802536911.8,
+          "targetEpochMs": 1791802536923,
+          "observerEpochMs": 1791802536914.8,
+          "schedulerEpochMs": 1791802536924.5,
+          "conditionEpochMs": 1791802536924.5,
+          "clickEpochMs": 1791802536924.6
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "scheduled",
+      "horizonMs": 1000,
+      "trialIndex": 0,
+      "jobId": "visible-20ffc564-3c33-42d8-a50b-84e3265d5785",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-20ffc564-3c33-42d8-a50b-84e3265d5785",
+          "epochMs": 1791802537934.8,
+          "wallMs": 1791802537934,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802536933.6,
+        "wallMs": 1791802536933,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802536933.6,
+        "wallEpochMs": 1791802536933,
+        "afterPageEpochMs": 1791802536933.6
+      },
+      "targetWallEpochMs": 1791802537933,
+      "targetEpochMs": 1791802537933.6,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-20ffc564-3c33-42d8-a50b-84e3265d5785",
+        "name": "visible-20ffc564-3c33-42d8-a50b-84e3265d5785",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "SCHEDULED",
+          "at": 1791802537933
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802540933,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-20ffc564-3c33-42d8-a50b-84e3265d5785",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802536933.7,
+        "wallMs": 1791802536933,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-20ffc564-3c33-42d8-a50b-84e3265d5785",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802536933,
+        "timing": {
+          "receivedEpochMs": 1791802536933.7,
+          "targetEpochMs": 1791802537933
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802536933.7,
+        "wallMs": 1791802536933,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "collectionDeadlineEpochMs": 1791802541933.6,
+      "status": {
+        "jobId": "visible-20ffc564-3c33-42d8-a50b-84e3265d5785",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802537934,
+        "timing": {
+          "receivedEpochMs": 1791802536933.7,
+          "targetEpochMs": 1791802537933,
+          "observerEpochMs": 1791802536933.9001,
+          "schedulerEpochMs": 1791802537934.8,
+          "conditionEpochMs": 1791802537934.8,
+          "clickEpochMs": 1791802537934.8
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802537942.9001,
+        "wallMs": 1791802537942,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": null,
+      "E1": null,
+      "E2": 1791802537934.8,
+      "actualStimulusLatenessMs": null,
+      "latencyMs": 1.199951171875,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-20ffc564-3c33-42d8-a50b-84e3265d5785",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802537934,
+        "timing": {
+          "receivedEpochMs": 1791802536933.7,
+          "targetEpochMs": 1791802537933,
+          "observerEpochMs": 1791802536933.9001,
+          "schedulerEpochMs": 1791802537934.8,
+          "conditionEpochMs": 1791802537934.8,
+          "clickEpochMs": 1791802537934.8
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "scheduled",
+      "horizonMs": 1000,
+      "trialIndex": 1,
+      "jobId": "visible-368d477b-cebb-4263-8283-e85551de24bc",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-368d477b-cebb-4263-8283-e85551de24bc",
+          "epochMs": 1791802538947.2,
+          "wallMs": 1791802538947,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802537945.5,
+        "wallMs": 1791802537945,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802537945.5,
+        "wallEpochMs": 1791802537945,
+        "afterPageEpochMs": 1791802537945.5
+      },
+      "targetWallEpochMs": 1791802538945,
+      "targetEpochMs": 1791802538945.5,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-368d477b-cebb-4263-8283-e85551de24bc",
+        "name": "visible-368d477b-cebb-4263-8283-e85551de24bc",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "SCHEDULED",
+          "at": 1791802538945
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802541945,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-368d477b-cebb-4263-8283-e85551de24bc",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802537945.6,
+        "wallMs": 1791802537945,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-368d477b-cebb-4263-8283-e85551de24bc",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802537945,
+        "timing": {
+          "receivedEpochMs": 1791802537945.6,
+          "targetEpochMs": 1791802538945
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802537945.6,
+        "wallMs": 1791802537945,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "collectionDeadlineEpochMs": 1791802542945.5,
+      "status": {
+        "jobId": "visible-368d477b-cebb-4263-8283-e85551de24bc",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802538947,
+        "timing": {
+          "receivedEpochMs": 1791802537945.6,
+          "targetEpochMs": 1791802538945,
+          "observerEpochMs": 1791802537945.7,
+          "schedulerEpochMs": 1791802538947.1,
+          "conditionEpochMs": 1791802538947.1,
+          "clickEpochMs": 1791802538947.2
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802538952.2,
+        "wallMs": 1791802538952,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": null,
+      "E1": null,
+      "E2": 1791802538947.2,
+      "actualStimulusLatenessMs": null,
+      "latencyMs": 1.699951171875,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-368d477b-cebb-4263-8283-e85551de24bc",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802538947,
+        "timing": {
+          "receivedEpochMs": 1791802537945.6,
+          "targetEpochMs": 1791802538945,
+          "observerEpochMs": 1791802537945.7,
+          "schedulerEpochMs": 1791802538947.1,
+          "conditionEpochMs": 1791802538947.1,
+          "clickEpochMs": 1791802538947.2
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "scheduled",
+      "horizonMs": 1000,
+      "trialIndex": 2,
+      "jobId": "visible-beeebc53-5508-43ca-8b39-e31431ce9c70",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-beeebc53-5508-43ca-8b39-e31431ce9c70",
+          "epochMs": 1791802539956.8,
+          "wallMs": 1791802539956,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802538955,
+        "wallMs": 1791802538955,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802538955,
+        "wallEpochMs": 1791802538955,
+        "afterPageEpochMs": 1791802538955
+      },
+      "targetWallEpochMs": 1791802539955,
+      "targetEpochMs": 1791802539955,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-beeebc53-5508-43ca-8b39-e31431ce9c70",
+        "name": "visible-beeebc53-5508-43ca-8b39-e31431ce9c70",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "SCHEDULED",
+          "at": 1791802539955
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802542955,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-beeebc53-5508-43ca-8b39-e31431ce9c70",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802538955,
+        "wallMs": 1791802538955,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-beeebc53-5508-43ca-8b39-e31431ce9c70",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802538955,
+        "timing": {
+          "receivedEpochMs": 1791802538955,
+          "targetEpochMs": 1791802539955
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802538955.2,
+        "wallMs": 1791802538955,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "collectionDeadlineEpochMs": 1791802543955,
+      "status": {
+        "jobId": "visible-beeebc53-5508-43ca-8b39-e31431ce9c70",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802539956,
+        "timing": {
+          "receivedEpochMs": 1791802538955,
+          "targetEpochMs": 1791802539955,
+          "observerEpochMs": 1791802538955.8,
+          "schedulerEpochMs": 1791802539956.7,
+          "conditionEpochMs": 1791802539956.7,
+          "clickEpochMs": 1791802539956.8
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802539965.7,
+        "wallMs": 1791802539965,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": null,
+      "E1": null,
+      "E2": 1791802539956.8,
+      "actualStimulusLatenessMs": null,
+      "latencyMs": 1.800048828125,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-beeebc53-5508-43ca-8b39-e31431ce9c70",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802539956,
+        "timing": {
+          "receivedEpochMs": 1791802538955,
+          "targetEpochMs": 1791802539955,
+          "observerEpochMs": 1791802538955.8,
+          "schedulerEpochMs": 1791802539956.7,
+          "conditionEpochMs": 1791802539956.7,
+          "clickEpochMs": 1791802539956.8
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "scheduled",
+      "horizonMs": 1000,
+      "trialIndex": 3,
+      "jobId": "visible-b07d2158-19d6-4f2b-a5eb-e294f213246d",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-b07d2158-19d6-4f2b-a5eb-e294f213246d",
+          "epochMs": 1791802540968.7,
+          "wallMs": 1791802540968,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802539968.2,
+        "wallMs": 1791802539968,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802539968.2,
+        "wallEpochMs": 1791802539968,
+        "afterPageEpochMs": 1791802539968.2
+      },
+      "targetWallEpochMs": 1791802540968,
+      "targetEpochMs": 1791802540968.2,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-b07d2158-19d6-4f2b-a5eb-e294f213246d",
+        "name": "visible-b07d2158-19d6-4f2b-a5eb-e294f213246d",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "SCHEDULED",
+          "at": 1791802540968
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802543968,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-b07d2158-19d6-4f2b-a5eb-e294f213246d",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802539968.3,
+        "wallMs": 1791802539968,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-b07d2158-19d6-4f2b-a5eb-e294f213246d",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802539968,
+        "timing": {
+          "receivedEpochMs": 1791802539968.3,
+          "targetEpochMs": 1791802540968
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802539968.3,
+        "wallMs": 1791802539968,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "collectionDeadlineEpochMs": 1791802544968.2,
+      "status": {
+        "jobId": "visible-b07d2158-19d6-4f2b-a5eb-e294f213246d",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802540968,
+        "timing": {
+          "receivedEpochMs": 1791802539968.3,
+          "targetEpochMs": 1791802540968,
+          "observerEpochMs": 1791802539968.4001,
+          "schedulerEpochMs": 1791802540968.6,
+          "conditionEpochMs": 1791802540968.6,
+          "clickEpochMs": 1791802540968.7
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802540973.9001,
+        "wallMs": 1791802540973,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": null,
+      "E1": null,
+      "E2": 1791802540968.7,
+      "actualStimulusLatenessMs": null,
+      "latencyMs": 0.5,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-b07d2158-19d6-4f2b-a5eb-e294f213246d",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802540968,
+        "timing": {
+          "receivedEpochMs": 1791802539968.3,
+          "targetEpochMs": 1791802540968,
+          "observerEpochMs": 1791802539968.4001,
+          "schedulerEpochMs": 1791802540968.6,
+          "conditionEpochMs": 1791802540968.6,
+          "clickEpochMs": 1791802540968.7
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "scheduled",
+      "horizonMs": 1000,
+      "trialIndex": 4,
+      "jobId": "visible-ff07ef64-197d-48b8-bc6b-98dd07952a1c",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-ff07ef64-197d-48b8-bc6b-98dd07952a1c",
+          "epochMs": 1791802541976.4001,
+          "wallMs": 1791802541976,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802540976.5,
+        "wallMs": 1791802540976,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802540976.5,
+        "wallEpochMs": 1791802540976,
+        "afterPageEpochMs": 1791802540976.5
+      },
+      "targetWallEpochMs": 1791802541976,
+      "targetEpochMs": 1791802541976.5,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-ff07ef64-197d-48b8-bc6b-98dd07952a1c",
+        "name": "visible-ff07ef64-197d-48b8-bc6b-98dd07952a1c",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "SCHEDULED",
+          "at": 1791802541976
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802544976,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-ff07ef64-197d-48b8-bc6b-98dd07952a1c",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802540976.6,
+        "wallMs": 1791802540976,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-ff07ef64-197d-48b8-bc6b-98dd07952a1c",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802540976,
+        "timing": {
+          "receivedEpochMs": 1791802540976.6,
+          "targetEpochMs": 1791802541976
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802540976.6,
+        "wallMs": 1791802540976,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "collectionDeadlineEpochMs": 1791802545976.5,
+      "status": {
+        "jobId": "visible-ff07ef64-197d-48b8-bc6b-98dd07952a1c",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802541976,
+        "timing": {
+          "receivedEpochMs": 1791802540976.6,
+          "targetEpochMs": 1791802541976,
+          "observerEpochMs": 1791802540980.3,
+          "schedulerEpochMs": 1791802541976.3,
+          "conditionEpochMs": 1791802541976.4001,
+          "clickEpochMs": 1791802541976.4001
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802541986,
+        "wallMs": 1791802541986,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": null,
+      "E1": null,
+      "E2": 1791802541976.4001,
+      "actualStimulusLatenessMs": null,
+      "latencyMs": -0.099853515625,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-ff07ef64-197d-48b8-bc6b-98dd07952a1c",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802541976,
+        "timing": {
+          "receivedEpochMs": 1791802540976.6,
+          "targetEpochMs": 1791802541976,
+          "observerEpochMs": 1791802540980.3,
+          "schedulerEpochMs": 1791802541976.3,
+          "conditionEpochMs": 1791802541976.4001,
+          "clickEpochMs": 1791802541976.4001
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "scheduled",
+      "horizonMs": 8000,
+      "trialIndex": 0,
+      "jobId": "visible-b5841e6b-65c1-4b0a-bb12-5d68dcfd68da",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-b5841e6b-65c1-4b0a-bb12-5d68dcfd68da",
+          "epochMs": 1791802550014.2,
+          "wallMs": 1791802550014,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802541988.6,
+        "wallMs": 1791802541988,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802541988.6,
+        "wallEpochMs": 1791802541988,
+        "afterPageEpochMs": 1791802541988.6
+      },
+      "targetWallEpochMs": 1791802549988,
+      "targetEpochMs": 1791802549988.6,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-b5841e6b-65c1-4b0a-bb12-5d68dcfd68da",
+        "name": "visible-b5841e6b-65c1-4b0a-bb12-5d68dcfd68da",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "SCHEDULED",
+          "at": 1791802549988
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802552988,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-b5841e6b-65c1-4b0a-bb12-5d68dcfd68da",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802541988.7,
+        "wallMs": 1791802541988,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-b5841e6b-65c1-4b0a-bb12-5d68dcfd68da",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802541988,
+        "timing": {
+          "receivedEpochMs": 1791802541988.7,
+          "targetEpochMs": 1791802549988
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802541988.8,
+        "wallMs": 1791802541988,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "collectionDeadlineEpochMs": 1791802553988.6,
+      "status": {
+        "jobId": "visible-b5841e6b-65c1-4b0a-bb12-5d68dcfd68da",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802550014,
+        "timing": {
+          "receivedEpochMs": 1791802541988.7,
+          "targetEpochMs": 1791802549988,
+          "observerEpochMs": 1791802541989.5,
+          "schedulerEpochMs": 1791802550014.2,
+          "conditionEpochMs": 1791802550014.2,
+          "clickEpochMs": 1791802550014.2
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802550019.8,
+        "wallMs": 1791802550019,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": null,
+      "E1": null,
+      "E2": 1791802550014.2,
+      "actualStimulusLatenessMs": null,
+      "latencyMs": 25.599853515625,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-b5841e6b-65c1-4b0a-bb12-5d68dcfd68da",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802550014,
+        "timing": {
+          "receivedEpochMs": 1791802541988.7,
+          "targetEpochMs": 1791802549988,
+          "observerEpochMs": 1791802541989.5,
+          "schedulerEpochMs": 1791802550014.2,
+          "conditionEpochMs": 1791802550014.2,
+          "clickEpochMs": 1791802550014.2
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "scheduled",
+      "horizonMs": 8000,
+      "trialIndex": 1,
+      "jobId": "visible-70ca1536-13de-4a20-9c9e-2e264e85fea6",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-70ca1536-13de-4a20-9c9e-2e264e85fea6",
+          "epochMs": 1791802558023.3,
+          "wallMs": 1791802558023,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802550022.4001,
+        "wallMs": 1791802550022,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802550022.4001,
+        "wallEpochMs": 1791802550022,
+        "afterPageEpochMs": 1791802550022.4001
+      },
+      "targetWallEpochMs": 1791802558022,
+      "targetEpochMs": 1791802558022.4001,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-70ca1536-13de-4a20-9c9e-2e264e85fea6",
+        "name": "visible-70ca1536-13de-4a20-9c9e-2e264e85fea6",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "SCHEDULED",
+          "at": 1791802558022
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802561022,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-70ca1536-13de-4a20-9c9e-2e264e85fea6",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802550022.4001,
+        "wallMs": 1791802550022,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-70ca1536-13de-4a20-9c9e-2e264e85fea6",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802550022,
+        "timing": {
+          "receivedEpochMs": 1791802550022.4001,
+          "targetEpochMs": 1791802558022
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802550022.4001,
+        "wallMs": 1791802550022,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "collectionDeadlineEpochMs": 1791802562022.4001,
+      "status": {
+        "jobId": "visible-70ca1536-13de-4a20-9c9e-2e264e85fea6",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802558023,
+        "timing": {
+          "receivedEpochMs": 1791802550022.4001,
+          "targetEpochMs": 1791802558022,
+          "observerEpochMs": 1791802550022.7,
+          "schedulerEpochMs": 1791802558022.9001,
+          "conditionEpochMs": 1791802558022.9001,
+          "clickEpochMs": 1791802558023.3
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802558029.4001,
+        "wallMs": 1791802558029,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": null,
+      "E1": null,
+      "E2": 1791802558023.3,
+      "actualStimulusLatenessMs": null,
+      "latencyMs": 0.89990234375,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-70ca1536-13de-4a20-9c9e-2e264e85fea6",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802558023,
+        "timing": {
+          "receivedEpochMs": 1791802550022.4001,
+          "targetEpochMs": 1791802558022,
+          "observerEpochMs": 1791802550022.7,
+          "schedulerEpochMs": 1791802558022.9001,
+          "conditionEpochMs": 1791802558022.9001,
+          "clickEpochMs": 1791802558023.3
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "scheduled",
+      "horizonMs": 8000,
+      "trialIndex": 2,
+      "jobId": "visible-739e58b6-c8ea-41f3-8186-9849a0651cf8",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-739e58b6-c8ea-41f3-8186-9849a0651cf8",
+          "epochMs": 1791802566036,
+          "wallMs": 1791802566036,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802558035.4001,
+        "wallMs": 1791802558035,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802558035.4001,
+        "wallEpochMs": 1791802558035,
+        "afterPageEpochMs": 1791802558035.4001
+      },
+      "targetWallEpochMs": 1791802566035,
+      "targetEpochMs": 1791802566035.4001,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-739e58b6-c8ea-41f3-8186-9849a0651cf8",
+        "name": "visible-739e58b6-c8ea-41f3-8186-9849a0651cf8",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "SCHEDULED",
+          "at": 1791802566035
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802569035,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-739e58b6-c8ea-41f3-8186-9849a0651cf8",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802558035.6,
+        "wallMs": 1791802558035,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-739e58b6-c8ea-41f3-8186-9849a0651cf8",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802558035,
+        "timing": {
+          "receivedEpochMs": 1791802558035.6,
+          "targetEpochMs": 1791802566035
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802558035.7,
+        "wallMs": 1791802558035,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "collectionDeadlineEpochMs": 1791802570035.4001,
+      "status": {
+        "jobId": "visible-739e58b6-c8ea-41f3-8186-9849a0651cf8",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802566036,
+        "timing": {
+          "receivedEpochMs": 1791802558035.6,
+          "targetEpochMs": 1791802566035,
+          "observerEpochMs": 1791802558035.8,
+          "schedulerEpochMs": 1791802566035.9001,
+          "conditionEpochMs": 1791802566035.9001,
+          "clickEpochMs": 1791802566036
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802566041.7,
+        "wallMs": 1791802566041,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": null,
+      "E1": null,
+      "E2": 1791802566036,
+      "actualStimulusLatenessMs": null,
+      "latencyMs": 0.599853515625,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-739e58b6-c8ea-41f3-8186-9849a0651cf8",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802566036,
+        "timing": {
+          "receivedEpochMs": 1791802558035.6,
+          "targetEpochMs": 1791802566035,
+          "observerEpochMs": 1791802558035.8,
+          "schedulerEpochMs": 1791802566035.9001,
+          "conditionEpochMs": 1791802566035.9001,
+          "clickEpochMs": 1791802566036
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "scheduled",
+      "horizonMs": 8000,
+      "trialIndex": 3,
+      "jobId": "visible-34af8c1c-e4ca-4243-a649-dd932084b59e",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-34af8c1c-e4ca-4243-a649-dd932084b59e",
+          "epochMs": 1791802574048.2,
+          "wallMs": 1791802574048,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802566046.7,
+        "wallMs": 1791802566047,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802566046.7,
+        "wallEpochMs": 1791802566047,
+        "afterPageEpochMs": 1791802566046.7
+      },
+      "targetWallEpochMs": 1791802574047,
+      "targetEpochMs": 1791802574046.7,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-34af8c1c-e4ca-4243-a649-dd932084b59e",
+        "name": "visible-34af8c1c-e4ca-4243-a649-dd932084b59e",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "SCHEDULED",
+          "at": 1791802574047
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802577047,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-34af8c1c-e4ca-4243-a649-dd932084b59e",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802566046.8,
+        "wallMs": 1791802566047,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-34af8c1c-e4ca-4243-a649-dd932084b59e",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802566047,
+        "timing": {
+          "receivedEpochMs": 1791802566046.8,
+          "targetEpochMs": 1791802574047
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802566046.9001,
+        "wallMs": 1791802566047,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "collectionDeadlineEpochMs": 1791802578046.7,
+      "status": {
+        "jobId": "visible-34af8c1c-e4ca-4243-a649-dd932084b59e",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802574048,
+        "timing": {
+          "receivedEpochMs": 1791802566046.8,
+          "targetEpochMs": 1791802574047,
+          "observerEpochMs": 1791802566047.5,
+          "schedulerEpochMs": 1791802574047.9001,
+          "conditionEpochMs": 1791802574047.9001,
+          "clickEpochMs": 1791802574048.2
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802574057.5,
+        "wallMs": 1791802574057,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": null,
+      "E1": null,
+      "E2": 1791802574048.2,
+      "actualStimulusLatenessMs": null,
+      "latencyMs": 1.5,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-34af8c1c-e4ca-4243-a649-dd932084b59e",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802574048,
+        "timing": {
+          "receivedEpochMs": 1791802566046.8,
+          "targetEpochMs": 1791802574047,
+          "observerEpochMs": 1791802566047.5,
+          "schedulerEpochMs": 1791802574047.9001,
+          "conditionEpochMs": 1791802574047.9001,
+          "clickEpochMs": 1791802574048.2
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "scheduled",
+      "horizonMs": 8000,
+      "trialIndex": 4,
+      "jobId": "visible-952c5cb3-b427-4096-ac30-aba70c1dc990",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-952c5cb3-b427-4096-ac30-aba70c1dc990",
+          "epochMs": 1791802582064.2,
+          "wallMs": 1791802582064,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802574064.4001,
+        "wallMs": 1791802574064,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802574064.4001,
+        "wallEpochMs": 1791802574064,
+        "afterPageEpochMs": 1791802574064.4001
+      },
+      "targetWallEpochMs": 1791802582064,
+      "targetEpochMs": 1791802582064.4001,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-952c5cb3-b427-4096-ac30-aba70c1dc990",
+        "name": "visible-952c5cb3-b427-4096-ac30-aba70c1dc990",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "SCHEDULED",
+          "at": 1791802582064
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802585064,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-952c5cb3-b427-4096-ac30-aba70c1dc990",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802574064.6,
+        "wallMs": 1791802574064,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-952c5cb3-b427-4096-ac30-aba70c1dc990",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802574065,
+        "timing": {
+          "receivedEpochMs": 1791802574064.6,
+          "targetEpochMs": 1791802582064
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802574064.6,
+        "wallMs": 1791802574065,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "collectionDeadlineEpochMs": 1791802586064.4001,
+      "status": {
+        "jobId": "visible-952c5cb3-b427-4096-ac30-aba70c1dc990",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802582064,
+        "timing": {
+          "receivedEpochMs": 1791802574064.6,
+          "targetEpochMs": 1791802582064,
+          "observerEpochMs": 1791802574064.8,
+          "schedulerEpochMs": 1791802582064,
+          "conditionEpochMs": 1791802582064.1,
+          "clickEpochMs": 1791802582064.2
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802582072.1,
+        "wallMs": 1791802582072,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": null,
+      "E1": null,
+      "E2": 1791802582064.2,
+      "actualStimulusLatenessMs": null,
+      "latencyMs": -0.2001953125,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-952c5cb3-b427-4096-ac30-aba70c1dc990",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802582064,
+        "timing": {
+          "receivedEpochMs": 1791802574064.6,
+          "targetEpochMs": 1791802582064,
+          "observerEpochMs": 1791802574064.8,
+          "schedulerEpochMs": 1791802582064,
+          "conditionEpochMs": 1791802582064.1,
+          "clickEpochMs": 1791802582064.2
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "reactive",
+      "horizonMs": 1000,
+      "trialIndex": 0,
+      "jobId": "visible-09d610e1-b8ee-44ba-8f2c-e54700abd678",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-09d610e1-b8ee-44ba-8f2c-e54700abd678",
+          "epochMs": 1791802583080.8,
+          "wallMs": 1791802583081,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802582077.6,
+        "wallMs": 1791802582078,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802582077.7,
+        "wallEpochMs": 1791802582078,
+        "afterPageEpochMs": 1791802582077.7
+      },
+      "targetWallEpochMs": 1791802583078,
+      "targetEpochMs": 1791802583077.9001,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-09d610e1-b8ee-44ba-8f2c-e54700abd678",
+        "name": "visible-09d610e1-b8ee-44ba-8f2c-e54700abd678",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "ELEMENT_ENABLE",
+          "selector": "#reserve"
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802586078,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-09d610e1-b8ee-44ba-8f2c-e54700abd678",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802582077.8,
+        "wallMs": 1791802582078,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-09d610e1-b8ee-44ba-8f2c-e54700abd678",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802582078,
+        "timing": {
+          "receivedEpochMs": 1791802582077.8
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802582077.9001,
+        "wallMs": 1791802582078,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "intendedStimulusTime": 1791802583077.9001,
+      "collectionDeadlineEpochMs": 1791802587077.9001,
+      "actualStimulus": {
+        "beforeEpochMs": 1791802583080.2,
+        "epochMs": 1791802583080.3,
+        "wallMs": 1791802583080
+      },
+      "status": {
+        "jobId": "visible-09d610e1-b8ee-44ba-8f2c-e54700abd678",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802583081,
+        "timing": {
+          "receivedEpochMs": 1791802582077.8,
+          "observerEpochMs": 1791802583080.5,
+          "schedulerEpochMs": 1791802583063,
+          "conditionEpochMs": 1791802583080.5,
+          "clickEpochMs": 1791802583080.8
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802583090.8,
+        "wallMs": 1791802583091,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": 1791802583080.3,
+      "E1": 1791802583080.5,
+      "E2": 1791802583080.8,
+      "actualStimulusLatenessMs": 2.39990234375,
+      "latencyMs": 0.5,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-09d610e1-b8ee-44ba-8f2c-e54700abd678",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802583081,
+        "timing": {
+          "receivedEpochMs": 1791802582077.8,
+          "observerEpochMs": 1791802583080.5,
+          "schedulerEpochMs": 1791802583063,
+          "conditionEpochMs": 1791802583080.5,
+          "clickEpochMs": 1791802583080.8
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "reactive",
+      "horizonMs": 1000,
+      "trialIndex": 1,
+      "jobId": "visible-2d895dca-8ae5-4f06-bada-7d33d8912b81",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-2d895dca-8ae5-4f06-bada-7d33d8912b81",
+          "epochMs": 1791802584100.9001,
+          "wallMs": 1791802584101,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802583095.5,
+        "wallMs": 1791802583096,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802583095.6,
+        "wallEpochMs": 1791802583096,
+        "afterPageEpochMs": 1791802583095.6
+      },
+      "targetWallEpochMs": 1791802584096,
+      "targetEpochMs": 1791802584095.6,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-2d895dca-8ae5-4f06-bada-7d33d8912b81",
+        "name": "visible-2d895dca-8ae5-4f06-bada-7d33d8912b81",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "ELEMENT_ENABLE",
+          "selector": "#reserve"
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802587096,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-2d895dca-8ae5-4f06-bada-7d33d8912b81",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802583095.6,
+        "wallMs": 1791802583096,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-2d895dca-8ae5-4f06-bada-7d33d8912b81",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802583096,
+        "timing": {
+          "receivedEpochMs": 1791802583095.6
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802583095.6,
+        "wallMs": 1791802583096,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "intendedStimulusTime": 1791802584095.6,
+      "collectionDeadlineEpochMs": 1791802588095.6,
+      "actualStimulus": {
+        "beforeEpochMs": 1791802584100.6,
+        "epochMs": 1791802584100.6,
+        "wallMs": 1791802584101
+      },
+      "status": {
+        "jobId": "visible-2d895dca-8ae5-4f06-bada-7d33d8912b81",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802584101,
+        "timing": {
+          "receivedEpochMs": 1791802583095.6,
+          "observerEpochMs": 1791802584100.6,
+          "schedulerEpochMs": 1791802584079.3,
+          "conditionEpochMs": 1791802584100.6,
+          "clickEpochMs": 1791802584100.9001
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802584110.1,
+        "wallMs": 1791802584110,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": 1791802584100.6,
+      "E1": 1791802584100.6,
+      "E2": 1791802584100.9001,
+      "actualStimulusLatenessMs": 5,
+      "latencyMs": 0.300048828125,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-2d895dca-8ae5-4f06-bada-7d33d8912b81",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802584101,
+        "timing": {
+          "receivedEpochMs": 1791802583095.6,
+          "observerEpochMs": 1791802584100.6,
+          "schedulerEpochMs": 1791802584079.3,
+          "conditionEpochMs": 1791802584100.6,
+          "clickEpochMs": 1791802584100.9001
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "reactive",
+      "horizonMs": 1000,
+      "trialIndex": 2,
+      "jobId": "visible-ffd68d57-c147-4376-8f65-9c8b50472564",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-ffd68d57-c147-4376-8f65-9c8b50472564",
+          "epochMs": 1791802585117.1,
+          "wallMs": 1791802585117,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802584113.3,
+        "wallMs": 1791802584113,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802584113.4001,
+        "wallEpochMs": 1791802584113,
+        "afterPageEpochMs": 1791802584113.4001
+      },
+      "targetWallEpochMs": 1791802585113,
+      "targetEpochMs": 1791802585113.5,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-ffd68d57-c147-4376-8f65-9c8b50472564",
+        "name": "visible-ffd68d57-c147-4376-8f65-9c8b50472564",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "ELEMENT_ENABLE",
+          "selector": "#reserve"
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802588113,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-ffd68d57-c147-4376-8f65-9c8b50472564",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802584113.4001,
+        "wallMs": 1791802584113,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-ffd68d57-c147-4376-8f65-9c8b50472564",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802584113,
+        "timing": {
+          "receivedEpochMs": 1791802584113.4001
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802584113.5,
+        "wallMs": 1791802584113,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "intendedStimulusTime": 1791802585113.5,
+      "collectionDeadlineEpochMs": 1791802589113.5,
+      "actualStimulus": {
+        "beforeEpochMs": 1791802585116.7,
+        "epochMs": 1791802585116.8,
+        "wallMs": 1791802585117
+      },
+      "status": {
+        "jobId": "visible-ffd68d57-c147-4376-8f65-9c8b50472564",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802585117,
+        "timing": {
+          "receivedEpochMs": 1791802584113.4001,
+          "observerEpochMs": 1791802585116.8,
+          "schedulerEpochMs": 1791802585103,
+          "conditionEpochMs": 1791802585116.9001,
+          "clickEpochMs": 1791802585117.1
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802585127.7,
+        "wallMs": 1791802585128,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": 1791802585116.8,
+      "E1": 1791802585116.8,
+      "E2": 1791802585117.1,
+      "actualStimulusLatenessMs": 3.300048828125,
+      "latencyMs": 0.300048828125,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-ffd68d57-c147-4376-8f65-9c8b50472564",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802585117,
+        "timing": {
+          "receivedEpochMs": 1791802584113.4001,
+          "observerEpochMs": 1791802585116.8,
+          "schedulerEpochMs": 1791802585103,
+          "conditionEpochMs": 1791802585116.9001,
+          "clickEpochMs": 1791802585117.1
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "reactive",
+      "horizonMs": 1000,
+      "trialIndex": 3,
+      "jobId": "visible-07630973-6755-48c8-bf6c-861e94cddf7d",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-07630973-6755-48c8-bf6c-861e94cddf7d",
+          "epochMs": 1791802586135.2,
+          "wallMs": 1791802586135,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802585130.7,
+        "wallMs": 1791802585131,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802585130.8,
+        "wallEpochMs": 1791802585131,
+        "afterPageEpochMs": 1791802585130.8
+      },
+      "targetWallEpochMs": 1791802586131,
+      "targetEpochMs": 1791802586130.9001,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-07630973-6755-48c8-bf6c-861e94cddf7d",
+        "name": "visible-07630973-6755-48c8-bf6c-861e94cddf7d",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "ELEMENT_ENABLE",
+          "selector": "#reserve"
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802589131,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-07630973-6755-48c8-bf6c-861e94cddf7d",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802585130.9001,
+        "wallMs": 1791802585131,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-07630973-6755-48c8-bf6c-861e94cddf7d",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802585131,
+        "timing": {
+          "receivedEpochMs": 1791802585130.9001
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802585130.9001,
+        "wallMs": 1791802585131,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "intendedStimulusTime": 1791802586130.9001,
+      "collectionDeadlineEpochMs": 1791802590130.9001,
+      "actualStimulus": {
+        "beforeEpochMs": 1791802586134.8,
+        "epochMs": 1791802586134.9001,
+        "wallMs": 1791802586135
+      },
+      "status": {
+        "jobId": "visible-07630973-6755-48c8-bf6c-861e94cddf7d",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802586135,
+        "timing": {
+          "receivedEpochMs": 1791802585130.9001,
+          "observerEpochMs": 1791802586134.9001,
+          "schedulerEpochMs": 1791802586118.2,
+          "conditionEpochMs": 1791802586135,
+          "clickEpochMs": 1791802586135.2
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802586145.2,
+        "wallMs": 1791802586145,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": 1791802586134.9001,
+      "E1": 1791802586134.9001,
+      "E2": 1791802586135.2,
+      "actualStimulusLatenessMs": 4,
+      "latencyMs": 0.2998046875,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-07630973-6755-48c8-bf6c-861e94cddf7d",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802586135,
+        "timing": {
+          "receivedEpochMs": 1791802585130.9001,
+          "observerEpochMs": 1791802586134.9001,
+          "schedulerEpochMs": 1791802586118.2,
+          "conditionEpochMs": 1791802586135,
+          "clickEpochMs": 1791802586135.2
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    },
+    {
+      "scenario": "reactive",
+      "horizonMs": 1000,
+      "trialIndex": 4,
+      "jobId": "visible-c43c8f88-ec75-40a6-9721-7c934b8e3c55",
+      "documentId": "1791802536447.8-kjj2jdfc1kk",
+      "clicks": [
+        {
+          "jobId": "visible-c43c8f88-ec75-40a6-9721-7c934b8e3c55",
+          "epochMs": 1791802587149.7,
+          "wallMs": 1791802587150,
+          "trusted": false
+        }
+      ],
+      "cancellation": "cancelled",
+      "visibilityBefore": {
+        "epochMs": 1791802586148.2,
+        "wallMs": 1791802586148,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "anchors": {
+        "beforePageEpochMs": 1791802586148.2,
+        "wallEpochMs": 1791802586148,
+        "afterPageEpochMs": 1791802586148.2
+      },
+      "targetWallEpochMs": 1791802587148,
+      "targetEpochMs": 1791802587148.5,
+      "targetUncertaintyMs": 1,
+      "plan": {
+        "schemaVersion": "1.0",
+        "jobId": "visible-c43c8f88-ec75-40a6-9721-7c934b8e3c55",
+        "name": "visible-c43c8f88-ec75-40a6-9721-7c934b8e3c55",
+        "backend": "playwright",
+        "target": {
+          "tabId": "owned-fixture",
+          "selector": "#reserve",
+          "url": "http://127.0.0.1:53937/local.html"
+        },
+        "trigger": {
+          "type": "ELEMENT_ENABLE",
+          "selector": "#reserve"
+        },
+        "action": {
+          "type": "click"
+        },
+        "timezone": "UTC",
+        "expiresAt": 1791802590148,
+        "maxExecutions": 1,
+        "verification": {
+          "timeoutMs": 1000
+        },
+        "guards": {
+          "approvedUrl": "http://127.0.0.1:53937/local.html",
+          "allowIrreversible": false
+        }
+      },
+      "installReceipt": {
+        "jobId": "visible-c43c8f88-ec75-40a6-9721-7c934b8e3c55",
+        "documentId": "1791802536447.8-kjj2jdfc1kk"
+      },
+      "armBefore": {
+        "epochMs": 1791802586148.4001,
+        "wallMs": 1791802586148,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "armReceipt": {
+        "jobId": "visible-c43c8f88-ec75-40a6-9721-7c934b8e3c55",
+        "state": "WAITING",
+        "executions": 0,
+        "updatedAt": 1791802586148,
+        "timing": {
+          "receivedEpochMs": 1791802586148.4001
+        }
+      },
+      "armAfter": {
+        "epochMs": 1791802586148.4001,
+        "wallMs": 1791802586148,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "intendedStimulusTime": 1791802587148.5,
+      "collectionDeadlineEpochMs": 1791802591148.5,
+      "actualStimulus": {
+        "beforeEpochMs": 1791802587149.5,
+        "epochMs": 1791802587149.5,
+        "wallMs": 1791802587150
+      },
+      "status": {
+        "jobId": "visible-c43c8f88-ec75-40a6-9721-7c934b8e3c55",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802587150,
+        "timing": {
+          "receivedEpochMs": 1791802586148.4001,
+          "observerEpochMs": 1791802587149.5,
+          "schedulerEpochMs": 1791802587135.6,
+          "conditionEpochMs": 1791802587149.5,
+          "clickEpochMs": 1791802587149.7
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      },
+      "visibilityAfter": {
+        "epochMs": 1791802587159.9001,
+        "wallMs": 1791802587160,
+        "visibilityState": "visible",
+        "hidden": false
+      },
+      "visibilityAudit": [
+        {
+          "epochMs": 1791802536507.1,
+          "wallMs": 1791802536507,
+          "visibilityState": "visible",
+          "hidden": false
+        }
+      ],
+      "validVisibility": true,
+      "E0": 1791802587149.5,
+      "E1": 1791802587149.5,
+      "E2": 1791802587149.7,
+      "actualStimulusLatenessMs": 1,
+      "latencyMs": 0.199951171875,
+      "success": true,
+      "cancelReceipt": {
+        "jobId": "visible-c43c8f88-ec75-40a6-9721-7c934b8e3c55",
+        "state": "VERIFIED",
+        "executions": 1,
+        "updatedAt": 1791802587150,
+        "timing": {
+          "receivedEpochMs": 1791802586148.4001,
+          "observerEpochMs": 1791802587149.5,
+          "schedulerEpochMs": 1791802587135.6,
+          "conditionEpochMs": 1791802587149.5,
+          "clickEpochMs": 1791802587149.7
+        },
+        "message": "Synthetic local click only; no server-success guarantee"
+      }
+    }
+  ],
+  "errors": [],
+  "teardown": {
+    "page": "closed",
+    "cdp": "detached",
+    "context": "closed",
+    "browser": "closed",
+    "fixture": "closed"
+  },
+  "method": "Serial document-local cached-target synthetic clicks; independent authored fixture event ledger. No host IPC in measured path.",
+  "limits": [
+    "Small cells: descriptive mean/median/min/max only, no population P99 or SLA.",
+    "Document native visibility is audited; not physical occlusion, background-tab, sleep/wake or site acceptance evidence.",
+    "Adjacent performance epoch/Date anchors: target uncertainty is anchor half-span plus 1 ms wall quantization.",
+    "Reactive E0 is immediately after real disabled=false native setter, with before/after interval; intended deadline is separate.",
+    "E1 uses only available runtime observerEpochMs after E0; runtime field can also originate in ResizeObserver, not independent observer attribution.",
+    "No automatic replacements, busy-loop contention, production edits, private protocol or personal windows."
+  ],
+  "hashManifest": {
+    "before": {
+      "artifacts/benchmark/playwright-hidden.json": "f80f2a5d66bbf494d193446053277ec2b375fd15ac995361802fd4c4928f8aeb",
+      "artifacts/benchmark/playwright-browser.json": "ed280ad7ab81136162001cf8b7a83406149f36f0dbe7d8d8436259d15c84439b",
+      "artifacts/benchmark/aside-browser.json": "2f3d5a71988a5301daf97dd7c31c8f58e40733c007360ca186614578753f695e",
+      "artifacts/benchmark/playwright-node.json": "a684448bc462fc53affc25a51e4d74eb8234ce71779956c7a64f9bb6b7d4c6e0",
+      "artifacts/benchmark/playwright-cdp.json": "0e53666e9fb9579ce58e161123e2ce70b0c073872661620cd435e5a8fde76a11",
+      "artifacts/benchmark/hidden-state-probe.json": "3cdf3b42aa2a1bd679e66e53a7c018b34468400a9c92b2b844baae74f1d77cd4",
+      "flashact-0.1.0.tgz": "836c7e7979171f2cf69fdb9185fa710df4540fa0ebe421c37b338e6810f966cc"
+    },
+    "after": {
+      "artifacts/benchmark/playwright-hidden.json": "f80f2a5d66bbf494d193446053277ec2b375fd15ac995361802fd4c4928f8aeb",
+      "artifacts/benchmark/playwright-browser.json": "ed280ad7ab81136162001cf8b7a83406149f36f0dbe7d8d8436259d15c84439b",
+      "artifacts/benchmark/aside-browser.json": "2f3d5a71988a5301daf97dd7c31c8f58e40733c007360ca186614578753f695e",
+      "artifacts/benchmark/playwright-node.json": "a684448bc462fc53affc25a51e4d74eb8234ce71779956c7a64f9bb6b7d4c6e0",
+      "artifacts/benchmark/playwright-cdp.json": "0e53666e9fb9579ce58e161123e2ce70b0c073872661620cd435e5a8fde76a11",
+      "artifacts/benchmark/hidden-state-probe.json": "3cdf3b42aa2a1bd679e66e53a7c018b34468400a9c92b2b844baae74f1d77cd4",
+      "flashact-0.1.0.tgz": "836c7e7979171f2cf69fdb9185fa710df4540fa0ebe421c37b338e6810f966cc"
+    },
+    "unchanged": true
+  },
+  "runtimeMatchesProbe": true,
+  "fixtureUrl": "http://127.0.0.1:53937/local.html",
+  "browserVersion": "156.0.8078.4",
+  "nativeWindowBefore": {
+    "windowId": 1836631918,
+    "bounds": {
+      "left": 221,
+      "top": 55,
+      "width": 1200,
+      "height": 905,
+      "windowState": "normal"
+    }
+  },
+  "browserProtocol": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/156.0.8078.4",
+    "revision": "@f842f52ef39fd97b449eb27cff414bf05a98ddce",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+    "jsVersion": "15.6.75"
+  },
+  "commandLineDisclosureError": "cdpSession.send: Protocol error (Browser.getBrowserCommandLine): Command line not returned because --enable-automation not set.",
+  "activeTrial": null,
+  "nativeWindowAfter": {
+    "windowId": 1836631918,
+    "bounds": {
+      "left": 221,
+      "top": 55,
+      "width": 1200,
+      "height": 905,
+      "windowState": "normal"
+    }
+  },
+  "visibilityAudit": [
+    {
+      "epochMs": 1791802536507.1,
+      "wallMs": 1791802536507,
+      "visibilityState": "visible",
+      "hidden": false
+    }
+  ],
+  "cells": [
+    {
+      "scenario": "scheduled",
+      "horizonMs": 12,
+      "trials": 10,
+      "count": 10,
+      "successes": 10,
+      "failures": 0,
+      "measured": 10,
+      "dupCount": 0,
+      "earlyWallGuardViolations": 0,
+      "negativeWithinUncertainty": 1,
+      "negativeBeyondUncertainty": 0,
+      "observedOver50ms": 0,
+      "meanMs": 0.75,
+      "medianMs": 0.8499755859375,
+      "minMs": -0.199951171875,
+      "maxMs": 1.800048828125
+    },
+    {
+      "scenario": "scheduled",
+      "horizonMs": 1000,
+      "trials": 5,
+      "count": 5,
+      "successes": 5,
+      "failures": 0,
+      "measured": 5,
+      "dupCount": 0,
+      "earlyWallGuardViolations": 0,
+      "negativeWithinUncertainty": 1,
+      "negativeBeyondUncertainty": 0,
+      "observedOver50ms": 0,
+      "meanMs": 1.02001953125,
+      "medianMs": 1.199951171875,
+      "minMs": -0.099853515625,
+      "maxMs": 1.800048828125
+    },
+    {
+      "scenario": "scheduled",
+      "horizonMs": 8000,
+      "trials": 5,
+      "count": 5,
+      "successes": 5,
+      "failures": 0,
+      "measured": 5,
+      "dupCount": 0,
+      "earlyWallGuardViolations": 0,
+      "negativeWithinUncertainty": 1,
+      "negativeBeyondUncertainty": 0,
+      "observedOver50ms": 0,
+      "meanMs": 5.6798828125,
+      "medianMs": 0.89990234375,
+      "minMs": -0.2001953125,
+      "maxMs": 25.599853515625
+    },
+    {
+      "scenario": "reactive",
+      "horizonMs": 1000,
+      "trials": 5,
+      "count": 5,
+      "successes": 5,
+      "failures": 0,
+      "measured": 5,
+      "dupCount": 0,
+      "earlyWallGuardViolations": 0,
+      "negativeWithinUncertainty": 0,
+      "negativeBeyondUncertainty": 0,
+      "observedOver50ms": 0,
+      "meanMs": 0.319970703125,
+      "medianMs": 0.300048828125,
+      "minMs": 0.199951171875,
+      "maxMs": 0.5
+    }
+  ],
+  "summary": {
+    "count": 25,
+    "successes": 25,
+    "failures": 0,
+    "measured": 25,
+    "dupCount": 0,
+    "earlyWallGuardViolations": 0,
+    "negativeWithinUncertainty": 3,
+    "negativeBeyondUncertainty": 0,
+    "observedOver50ms": 0,
+    "meanMs": 1.703974609375,
+    "medianMs": 0.599853515625,
+    "minMs": -0.2001953125,
+    "maxMs": 25.599853515625
+  },
+  "cleanupSuccess": true,
+  "finishedAt": "2026-10-12T10:56:27.272Z"
+}

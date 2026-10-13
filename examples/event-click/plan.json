@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0",
+  "jobId": "demo-event-click",
+  "name": "Approved local enabled-element click",
+  "backend": "playwright",
+  "target": {
+    "tabId": "REPLACE_WITH_APPROVED_TAB_ID",
+    "selector": "#reserve",
+    "url": "http://127.0.0.1:3000/local.html?enableAfter=5000",
+    "watchRoot": "body"
+  },
+  "trigger": { "type": "ELEMENT_ENABLE", "selector": "#reserve" },
+  "action": { "type": "click" },
+  "timezone": "UTC",
+  "expiresAt": 4102444860000,
+  "maxExecutions": 1,
+  "verification": {
+    "timeoutMs": 5000
+  },
+  "guards": {
+    "approvedUrl": "http://127.0.0.1:3000/local.html?enableAfter=5000",
+    "allowIrreversible": false
+  }
+}

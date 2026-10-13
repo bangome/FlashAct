@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>FlashAct local benchmark</title>
+<style>body{font:18px system-ui;margin:3rem;background:#fafafa;color:#222}button{padding:1rem}pre{white-space:pre-wrap}</style>
+<h1>FlashAct local benchmark</h1>
+<p>Local-only synthetic click fixture. No form, account, network action, or purchase.</p>
+<button id="reserve" type="button" disabled>Reserve (fixture only)</button>
+<pre id="receipt">No clicks yet</pre>
+<script>
+(() => {
+  const ledger = [];
+  let activeId = '';
+  let activationTimer;
+  const now = () => performance.timeOrigin + performance.now();
+  document.addEventListener('click', event => {
+    if (!(event.target instanceof HTMLButtonElement) || event.target.id !== 'reserve') return;
+    ledger.push({jobId: activeId, epochMs: now(), wallMs: Date.now(), trusted: event.isTrusted});
+    document.querySelector('#receipt').textContent = JSON.stringify({clicks: ledger.length, last: ledger.at(-1)}, null, 2);
+  });
+  globalThis.__flashactFixture = {
+    ledger,
+    reset(id, enabled = false) {
+      clearTimeout(activationTimer);
+      activeId = id;
+      const button = document.querySelector('#reserve');
+      button.disabled = !enabled;
+      button.removeAttribute('data-ready');
+      return now();
+    },
+    enable() {
+      const epoch = now();
+      document.querySelector('#reserve').disabled = false;
+      return epoch;
+    },
+    replace() {
+      const button = document.querySelector('#reserve');
+      button.replaceWith(button.cloneNode(true));
+    }
+  };
+  const query = new URLSearchParams(location.search);
+  if (query.get('ready') === '1') globalThis.__flashactFixture.enable();
+  const delay = query.get('enableAfter');
+  if (delay !== null && /^\d+$/.test(delay)) {
+    const milliseconds = Number(delay);
+    if (Number.isSafeInteger(milliseconds) && milliseconds <= 60000) {
+      activationTimer = setTimeout(() => globalThis.__flashactFixture.enable(), milliseconds);
+    }
+  }
+})();
+</script></html>

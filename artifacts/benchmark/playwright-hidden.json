@@ -1,0 +1,55 @@
+{
+  "status": "not-verified",
+  "command": "node scripts/hidden-tab-benchmark.mjs",
+  "startedAt": "2026-10-12T07:57:32.555Z",
+  "deadlineMs": 120000,
+  "measurementBudgetMs": 100000,
+  "backend": "playwright",
+  "launchOptions": {
+    "headless": false,
+    "timeout": 15000,
+    "ignoreDefaultArgs": [
+      "--disable-background-timer-throttling",
+      "--disable-renderer-backgrounding",
+      "--disable-backgrounding-occluded-windows"
+    ]
+  },
+  "flagDisclosure": "The three listed default flags are removed, not added. All other Playwright defaults remain; this is not a stock consumer Chromium configuration.",
+  "runtimeSha256": "769c2a5ffccd595d014de36c74c9a132019696f04cb311dd37c59e64ff16a391",
+  "implementation": "Compiled runtimeSource(), batchExpression()/pageBatch(), batchSchema and summarize() from dist; no host IPC in measured click path.",
+  "visibilityMethod": "Native document.visibilityState; second task-owned page brought to front. No visibility override or emulation.",
+  "batches": [],
+  "visibilityAudit": null,
+  "screenshot": {
+    "path": "artifacts/benchmark/playwright-hidden.png",
+    "phase": "blocked-run",
+    "provesVisibility": false
+  },
+  "teardown": {
+    "context": "closed",
+    "browser": "closed",
+    "server": "closed"
+  },
+  "limitations": [
+    "20 independent serialized jobs per case; nearest-rank p99 is the sample maximum, not a population guarantee.",
+    "Background timers may be throttled; scheduled target is only 12 ms ahead and job expiry is 3000 ms, unchanged from pageBatch.",
+    "Reactive enable happens in the same page task after arm; this is not latency from a delayed external event.",
+    "Actual HTMLElement synthetic local clicks only; VERIFIED does not imply trusted input or server acceptance.",
+    "Existing normal/Aside/high-CPU reports are untouched; prior Aside high-CPU p99 53.4 ms missed 50 ms. Hidden p99 may be worse.",
+    "pageBatch cancellation calls are reported, not instrumented timer/observer leak counts. Context closure destroys the owned document/runtime.",
+    "No five-minute intensive-throttling aging or OS sleep scenario is measured."
+  ],
+  "errors": [
+    {
+      "phase": "measurement",
+      "name": "TimeoutError",
+      "message": "page.waitForFunction: Timeout 5000ms exceeded."
+    }
+  ],
+  "fixtureUrl": "http://127.0.0.1:59358/local.html",
+  "browserVersion": "156.0.8078.4",
+  "visibilityAfterBringToFront": "visible",
+  "visibilityAtFailure": "visible",
+  "elapsedMs": 7353.921125,
+  "finishedAt": "2026-10-12T07:57:39.909Z"
+}

@@ -1,0 +1,393 @@
+{
+  "status": "BLOCKED",
+  "command": "node scripts/hidden-state-probe.mjs",
+  "startedAt": "2026-10-12T10:50:03.421Z",
+  "nodeVersion": "v22.22.2",
+  "launchOptions": {
+    "headless": false,
+    "timeout": 15000,
+    "ignoreDefaultArgs": [
+      "--disable-background-timer-throttling",
+      "--disable-renderer-backgrounding",
+      "--disable-backgrounding-occluded-windows"
+    ]
+  },
+  "method": "Native minimization of only the fresh task-owned primary Chromium window; not inactive-tab control.",
+  "flagDisclosure": "Listed background-bypass defaults are removed, not added; remaining Playwright defaults stay enabled.",
+  "runtimeSha256": "769c2a5ffccd595d014de36c74c9a132019696f04cb311dd37c59e64ff16a391",
+  "measurementTrials": 0,
+  "observations": [
+    {
+      "phase": "before-minimize",
+      "cdp": {
+        "visibilityState": "visible",
+        "hidden": false,
+        "nowMs": 1277.0999999940395,
+        "timeOriginMs": 1791802203996.9,
+        "epochMs": 1791802205274
+      },
+      "playwright": {
+        "visibilityState": "visible",
+        "hidden": false,
+        "nowMs": 1279.5,
+        "timeOriginMs": 1791802203996.9,
+        "epochMs": 1791802205276.4
+      },
+      "nativeBounds": {
+        "left": 221,
+        "top": 55,
+        "width": 1200,
+        "height": 905,
+        "windowState": "normal"
+      },
+      "agree": true
+    },
+    {
+      "phase": "after-minimize",
+      "cdp": {
+        "visibilityState": "visible",
+        "hidden": false,
+        "nowMs": 6301.0999999940395,
+        "timeOriginMs": 1791802203996.9,
+        "epochMs": 1791802210298
+      },
+      "playwright": {
+        "visibilityState": "visible",
+        "hidden": false,
+        "nowMs": 6302,
+        "timeOriginMs": 1791802203996.9,
+        "epochMs": 1791802210298.9
+      },
+      "nativeBounds": {
+        "left": 221,
+        "top": 55,
+        "width": 1200,
+        "height": 905,
+        "windowState": "normal"
+      },
+      "agree": true
+    },
+    {
+      "phase": "after-restore",
+      "cdp": {
+        "visibilityState": "visible",
+        "hidden": false,
+        "nowMs": 6305.9000000059605,
+        "timeOriginMs": 1791802203996.9,
+        "epochMs": 1791802210302.7998
+      },
+      "playwright": {
+        "visibilityState": "visible",
+        "hidden": false,
+        "nowMs": 6306.300000011921,
+        "timeOriginMs": 1791802203996.9,
+        "epochMs": 1791802210303.2
+      },
+      "nativeBounds": {
+        "left": 221,
+        "top": 55,
+        "width": 1200,
+        "height": 905,
+        "windowState": "normal"
+      },
+      "agree": true
+    }
+  ],
+  "cdpCommands": [
+    {
+      "method": "Browser.getWindowForTarget",
+      "params": {},
+      "startedAt": "2026-10-12T10:50:04.038Z",
+      "result": {
+        "windowId": 2072367500,
+        "bounds": {
+          "left": 221,
+          "top": 55,
+          "width": 1200,
+          "height": 905,
+          "windowState": "normal"
+        }
+      },
+      "status": "supported"
+    },
+    {
+      "method": "Browser.getWindowForTarget",
+      "params": {},
+      "startedAt": "2026-10-12T10:50:04.710Z",
+      "result": {
+        "windowId": 2072367500,
+        "bounds": {
+          "left": 221,
+          "top": 55,
+          "width": 1200,
+          "height": 905,
+          "windowState": "normal"
+        }
+      },
+      "status": "supported"
+    },
+    {
+      "method": "Browser.getVersion",
+      "params": {},
+      "startedAt": "2026-10-12T10:50:04.711Z",
+      "result": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/156.0.8078.4",
+        "revision": "@f842f52ef39fd97b449eb27cff414bf05a98ddce",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+        "jsVersion": "15.6.75"
+      },
+      "status": "supported"
+    },
+    {
+      "method": "Browser.getBrowserCommandLine",
+      "params": {},
+      "startedAt": "2026-10-12T10:50:04.714Z",
+      "status": "rejected-or-timeout",
+      "error": "cdpSession.send: Protocol error (Browser.getBrowserCommandLine): Command line not returned because --enable-automation not set."
+    },
+    {
+      "method": "Runtime.evaluate",
+      "params": {
+        "expression": "(() => { const nowMs = performance.now(); return {\n  visibilityState: document.visibilityState, hidden: document.hidden, nowMs,\n  timeOriginMs: performance.timeOrigin, epochMs: performance.timeOrigin + nowMs }; })()",
+        "returnByValue": true
+      },
+      "startedAt": "2026-10-12T10:50:05.273Z",
+      "result": {
+        "result": {
+          "type": "object",
+          "value": {
+            "visibilityState": "visible",
+            "hidden": false,
+            "nowMs": 1277.0999999940395,
+            "timeOriginMs": 1791802203996.9,
+            "epochMs": 1791802205274
+          }
+        }
+      },
+      "status": "supported"
+    },
+    {
+      "method": "Browser.getWindowBounds",
+      "params": {
+        "windowId": 2072367500
+      },
+      "startedAt": "2026-10-12T10:50:05.277Z",
+      "result": {
+        "bounds": {
+          "left": 221,
+          "top": 55,
+          "width": 1200,
+          "height": 905,
+          "windowState": "normal"
+        }
+      },
+      "status": "supported"
+    },
+    {
+      "method": "Browser.setWindowBounds",
+      "params": {
+        "windowId": 2072367500,
+        "bounds": {
+          "windowState": "minimized"
+        }
+      },
+      "startedAt": "2026-10-12T10:50:05.277Z",
+      "result": {},
+      "status": "supported"
+    },
+    {
+      "method": "Runtime.evaluate",
+      "params": {
+        "expression": "(() => { const nowMs = performance.now(); return {\n  visibilityState: document.visibilityState, hidden: document.hidden, nowMs,\n  timeOriginMs: performance.timeOrigin, epochMs: performance.timeOrigin + nowMs }; })()",
+        "returnByValue": true
+      },
+      "startedAt": "2026-10-12T10:50:10.297Z",
+      "result": {
+        "result": {
+          "type": "object",
+          "value": {
+            "visibilityState": "visible",
+            "hidden": false,
+            "nowMs": 6301.0999999940395,
+            "timeOriginMs": 1791802203996.9,
+            "epochMs": 1791802210298
+          }
+        }
+      },
+      "status": "supported"
+    },
+    {
+      "method": "Browser.getWindowBounds",
+      "params": {
+        "windowId": 2072367500
+      },
+      "startedAt": "2026-10-12T10:50:10.299Z",
+      "result": {
+        "bounds": {
+          "left": 221,
+          "top": 55,
+          "width": 1200,
+          "height": 905,
+          "windowState": "normal"
+        }
+      },
+      "status": "supported"
+    },
+    {
+      "method": "Browser.setWindowBounds",
+      "params": {
+        "windowId": 2072367500,
+        "bounds": {
+          "windowState": "normal"
+        }
+      },
+      "startedAt": "2026-10-12T10:50:10.300Z",
+      "result": {},
+      "status": "supported"
+    },
+    {
+      "method": "Browser.setWindowBounds",
+      "params": {
+        "windowId": 2072367500,
+        "bounds": {
+          "left": 221,
+          "top": 55,
+          "width": 1200,
+          "height": 905
+        }
+      },
+      "startedAt": "2026-10-12T10:50:10.300Z",
+      "result": {},
+      "status": "supported"
+    },
+    {
+      "method": "Runtime.evaluate",
+      "params": {
+        "expression": "(() => { const nowMs = performance.now(); return {\n  visibilityState: document.visibilityState, hidden: document.hidden, nowMs,\n  timeOriginMs: performance.timeOrigin, epochMs: performance.timeOrigin + nowMs }; })()",
+        "returnByValue": true
+      },
+      "startedAt": "2026-10-12T10:50:10.302Z",
+      "result": {
+        "result": {
+          "type": "object",
+          "value": {
+            "visibilityState": "visible",
+            "hidden": false,
+            "nowMs": 6305.9000000059605,
+            "timeOriginMs": 1791802203996.9,
+            "epochMs": 1791802210302.7998
+          }
+        }
+      },
+      "status": "supported"
+    },
+    {
+      "method": "Browser.getWindowBounds",
+      "params": {
+        "windowId": 2072367500
+      },
+      "startedAt": "2026-10-12T10:50:10.303Z",
+      "result": {
+        "bounds": {
+          "left": 221,
+          "top": 55,
+          "width": 1200,
+          "height": 905,
+          "windowState": "normal"
+        }
+      },
+      "status": "supported"
+    }
+  ],
+  "errors": [
+    {
+      "phase": "probe",
+      "name": "TimeoutError",
+      "message": "page.waitForFunction: Timeout 5000ms exceeded."
+    }
+  ],
+  "teardown": {
+    "primaryCDP": "detached",
+    "secondaryCDP": "detached",
+    "context": "closed",
+    "browser": "closed",
+    "server": "closed"
+  },
+  "restoration": {
+    "status": "restored",
+    "boundsMatch": true
+  },
+  "limitations": [
+    "Experimental CDP window commands may be unsupported.",
+    "This is a visibility gate only: no latency trials, timer-aging, sleep or SLA evidence.",
+    "No screenshots, emulation, visibility getter overrides, user profiles or user-window enumeration.",
+    "Actual command-line disclosure unavailable: cdpSession.send: Protocol error (Browser.getBrowserCommandLine): Command line not returned because --enable-automation not set."
+  ],
+  "hashManifest": {
+    "before": {
+      "playwright-hidden.json": "f80f2a5d66bbf494d193446053277ec2b375fd15ac995361802fd4c4928f8aeb",
+      "playwright-browser.json": "ed280ad7ab81136162001cf8b7a83406149f36f0dbe7d8d8436259d15c84439b",
+      "aside-browser.json": "2f3d5a71988a5301daf97dd7c31c8f58e40733c007360ca186614578753f695e",
+      "playwright-node.json": "a684448bc462fc53affc25a51e4d74eb8234ce71779956c7a64f9bb6b7d4c6e0",
+      "playwright-cdp.json": "0e53666e9fb9579ce58e161123e2ce70b0c073872661620cd435e5a8fde76a11"
+    },
+    "after": {
+      "playwright-hidden.json": "f80f2a5d66bbf494d193446053277ec2b375fd15ac995361802fd4c4928f8aeb",
+      "playwright-browser.json": "ed280ad7ab81136162001cf8b7a83406149f36f0dbe7d8d8436259d15c84439b",
+      "aside-browser.json": "2f3d5a71988a5301daf97dd7c31c8f58e40733c007360ca186614578753f695e",
+      "playwright-node.json": "a684448bc462fc53affc25a51e4d74eb8234ce71779956c7a64f9bb6b7d4c6e0",
+      "playwright-cdp.json": "0e53666e9fb9579ce58e161123e2ce70b0c073872661620cd435e5a8fde76a11"
+    },
+    "unchanged": true
+  },
+  "fixtureUrl": "http://127.0.0.1:53656/local.html",
+  "browserVersion": "156.0.8078.4",
+  "originalWindow": {
+    "windowId": 2072367500,
+    "bounds": {
+      "left": 221,
+      "top": 55,
+      "width": 1200,
+      "height": 905,
+      "windowState": "normal"
+    }
+  },
+  "ownedWindows": {
+    "primary": 2072367500,
+    "secondary": 2072367500,
+    "separateWindows": false,
+    "secondaryBounds": {
+      "left": 221,
+      "top": 55,
+      "width": 1200,
+      "height": 905,
+      "windowState": "normal"
+    }
+  },
+  "browserProtocolVersion": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/156.0.8078.4",
+    "revision": "@f842f52ef39fd97b449eb27cff414bf05a98ddce",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+    "jsVersion": "15.6.75"
+  },
+  "fullLaunchArguments": null,
+  "secondaryPage": "closed-before-native-window-probe",
+  "visibilityAudit": [
+    {
+      "visibilityState": "visible",
+      "hidden": false,
+      "nowMs": 37.20000001788139,
+      "timeOriginMs": 1791802203996.9,
+      "epochMs": 1791802204034.0999
+    }
+  ],
+  "transitionCounts": {
+    "visibleToHidden": 0,
+    "hiddenToVisible": 0
+  },
+  "cleanupSuccess": true,
+  "elapsedMs": 7009.9655,
+  "finishedAt": "2026-10-12T10:50:10.432Z"
+}

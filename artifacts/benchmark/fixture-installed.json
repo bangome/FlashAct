@@ -1,0 +1,33 @@
+{
+  "cwd": "/private/var/folders/2z/6tvknkjs6n58ztj44vq231nr0000gn/T/opencode",
+  "module": "/private/var/folders/2z/6tvknkjs6n58ztj44vq231nr0000gn/T/opencode/flashact-install.ef5fSn/node_modules/flashact/dist/benchmark/fixture.js",
+  "url": "http://127.0.0.1:59849/local.html",
+  "http": {"status": 200, "contentType": "text/html; charset=utf-8"},
+  "demos": [
+    {
+      "command": "schedule",
+      "args": ["/private/var/folders/2z/6tvknkjs6n58ztj44vq231nr0000gn/T/opencode/flashact-install.ef5fSn/node_modules/flashact/dist/cli/index.js", "schedule", "--launch", "--headless", "--url", "http://127.0.0.1:59849/local.html?ready=1", "--approved-url", "http://127.0.0.1:59849/local.html?ready=1", "--selector", "#reserve", "--action", "click", "--at", "2026-10-12T08:06:01.143Z"],
+      "statuses": [
+        {"jobId":"c535aca1-13e0-4538-a6aa-75999205aa9c","state":"DRAFT","executions":0,"updatedAt":1791792359704},
+        {"jobId":"c535aca1-13e0-4538-a6aa-75999205aa9c","state":"VALIDATED","executions":0,"updatedAt":1791792359714},
+        {"jobId":"c535aca1-13e0-4538-a6aa-75999205aa9c","state":"ARMED","executions":0,"updatedAt":1791792359741},
+        {"jobId":"c535aca1-13e0-4538-a6aa-75999205aa9c","state":"WAITING","executions":0,"timing":{"targetEpochMs":1791792361143,"receivedEpochMs":1791792359739.8},"updatedAt":1791792359740},
+        {"jobId":"c535aca1-13e0-4538-a6aa-75999205aa9c","state":"VERIFIED","executions":1,"timing":{"targetEpochMs":1791792361143,"schedulerEpochMs":1791792361145.2,"receivedEpochMs":1791792359739.8,"observerEpochMs":1791792359740.9,"clickEpochMs":1791792361147.4,"conditionEpochMs":1791792361146.1},"updatedAt":1791792361148}
+      ],
+      "teardown": {"code": 0, "signal": null}
+    },
+    {
+      "command": "watch",
+      "args": ["/private/var/folders/2z/6tvknkjs6n58ztj44vq231nr0000gn/T/opencode/flashact-install.ef5fSn/node_modules/flashact/dist/cli/index.js", "watch", "--launch", "--headless", "--url", "http://127.0.0.1:59849/local.html?enableAfter=5000", "--approved-url", "http://127.0.0.1:59849/local.html?enableAfter=5000", "--selector", "#reserve", "--action", "click", "--when", "#reserve:enabled"],
+      "statuses": [
+        {"jobId":"552b8a12-91dd-4082-92b7-1c2303dadd26","state":"DRAFT","executions":0,"updatedAt":1791792361837},
+        {"jobId":"552b8a12-91dd-4082-92b7-1c2303dadd26","state":"VALIDATED","executions":0,"updatedAt":1791792361843},
+        {"jobId":"552b8a12-91dd-4082-92b7-1c2303dadd26","state":"ARMED","executions":0,"updatedAt":1791792361860},
+        {"jobId":"552b8a12-91dd-4082-92b7-1c2303dadd26","state":"WAITING","executions":0,"timing":{"receivedEpochMs":1791792361859.8},"updatedAt":1791792361859},
+        {"jobId":"552b8a12-91dd-4082-92b7-1c2303dadd26","state":"VERIFIED","executions":1,"timing":{"schedulerEpochMs":1791792366797.5,"receivedEpochMs":1791792361859.8,"observerEpochMs":1791792366799,"clickEpochMs":1791792366800.0999,"conditionEpochMs":1791792366799.2},"updatedAt":1791792366800}
+      ],
+      "teardown": {"code": 0, "signal": null}
+    }
+  ],
+  "serverClosed": true
+}

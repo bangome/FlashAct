@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0",
+  "jobId": "demo-scheduled-click",
+  "name": "Approved local scheduled click",
+  "backend": "playwright",
+  "target": {
+    "tabId": "REPLACE_WITH_APPROVED_TAB_ID",
+    "selector": "#reserve",
+    "url": "http://127.0.0.1:3000/local.html?ready=1",
+    "watchRoot": "body"
+  },
+  "trigger": { "type": "SCHEDULED", "at": 4102444800000 },
+  "action": { "type": "click" },
+  "timezone": "UTC",
+  "expiresAt": 4102444860000,
+  "maxExecutions": 1,
+  "verification": {
+    "timeoutMs": 5000
+  },
+  "guards": {
+    "approvedUrl": "http://127.0.0.1:3000/local.html?ready=1",
+    "allowIrreversible": false
+  }
+}

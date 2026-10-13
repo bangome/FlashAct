@@ -1,0 +1,40 @@
+{
+  "name": "flashact",
+  "version": "0.1.0",
+  "description": "Prearmed low-latency browser execution engine with Playwright, Aside, CLI and MCP",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "flashact": "dist/cli/index.js"
+  },
+  "files": ["dist", "README.md", "CONTRACTS.md", "docs", "examples", "scripts/serve-fixture.mjs"],
+  "engines": {
+    "node": ">=22.12.0 <23",
+    "npm": ">=10"
+  },
+  "packageManager": "npm@10.9.7",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepack": "npm run build",
+    "typecheck": "tsc -p tsconfig.test.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "commander": "15.0.0",
+    "playwright": "1.64.0",
+    "zod": "4.6.6"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "typescript": "7.0.2",
+    "vitest": "5.0.3"
+  }
+}
