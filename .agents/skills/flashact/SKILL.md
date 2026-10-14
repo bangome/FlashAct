@@ -68,6 +68,24 @@ advertised tools to read browser guidance, discover tabs and inspect the approve
 page. Discover actual tool names instead of assuming an API. For CLI inspection,
 read `aside guide` and `aside guide repl` before using `aside repl`.
 
+Aside agent shells may omit the CLI directory from PATH even when the MCP
+configuration names its absolute executable. FlashAct launches `aside` from
+its process PATH. For this supplied configuration, prefix **each** FlashAct
+Aside invocation with `PATH="/Users/bogyung/.local/bin:$PATH"`; a previous
+shell tool's `export` need not survive into the next call. For another machine,
+use the directory of its verified Aside executable instead.
+
+```sh
+PATH="/Users/bogyung/.local/bin:$PATH" fa --tabs --backend aside
+```
+
+Keep this prefix when using the compiled Node entry point too. `spawn aside
+ENOENT` means the executable is missing from that process's PATH, not a login
+failure. A CLI `SecItemCopyMatching -25291` can instead mean that the agent's OS
+sandbox blocks keychain IPC even with the same user, Aqua and full-access mode.
+Report that distinction; do not reset installation keys or log out. Changing
+the account's OS sandbox setting needs the user's approval.
+
 Use `fa --tabs --backend aside` to match the target with FlashAct's actual tab
 list, then pass that exact ID and URL. If MCP and CLI see different profiles or
 hosts, resolve that mismatch before arming. Keep the Aside browser and target tab
