@@ -139,6 +139,33 @@ fa --inspect --endpoint http://127.0.0.1:9222 --tab APPROVED_TAB_ID --selector '
 
 Run only one action owner per control home. In a second terminal use `fa --status`, `fa --logs`, or `fa --cancel JOB_ID` with the emitted job ID. Action commands stay alive **even after a terminal result** until SIGINT/SIGTERM; stop them explicitly when finished. These are syntax examples, not commands executed by this documentation task.
 
+## Optional text-image CAPTCHA
+
+Action commands accept `--captcha-image <css>` and `--captcha-input <css>`
+together for one local text-image CAPTCHA after the original click. Optional
+`--captcha-submit <css>` requires `--captcha-success <css>`; submission is never
+implicit. Additional flags are `--captcha-length` (1..32, default 6),
+`--captcha-alphabet` (`uppercase-alphanumeric` by default, `alphanumeric`, or
+`digits`), `--captcha-min-confidence` (0..1, default 0.8), and
+`--captcha-timeout-ms` (100..120000, default 15000). Partial configurations and
+dangling CAPTCHA flags reject.
+
+The default recognizer needs macOS and Swift and prepares/compiles native Vision
+before arming; no API keys or model downloads are needed. Detection is preinstalled
+and event-driven, gated on the original click; OCR uses cropped image pixels.
+With a primary `--verify-selector`, its default timeout becomes at least the
+CAPTCHA timeout plus 2000 ms (minimum 5000 ms); an explicitly smaller timeout
+than the CAPTCHA timeout rejects.
+
+Read nested `status.captcha`, including confidence, error and stage timing,
+separately from main `state`/`executions`. Main click `VERIFIED` never establishes
+CAPTCHA success. Stale images, ambiguous targets, filled inputs and text outside
+confidence/alphabet/length constraints are refused. No text/images appear in
+status or logs; no retry, reconnect or rearm occurs. Grid, slider and third-party
+iframe challenges are unsupported, and success is not guaranteed.
+See [CAPTCHA configuration and outcomes](docs/captcha.md) for exact selectors,
+CLI/MCP examples and SDK exports.
+
 ## Safe execution workflow
 
 1. Use a task-owned local fixture first. Connect explicitly, list tabs, then select the exact returned tab ID. Playwright supports an explicit CDP endpoint or explicit launch through adapter options; it does not automatically connect to a personal browser.

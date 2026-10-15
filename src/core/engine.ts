@@ -6,6 +6,10 @@ import type { Backend, BackendCapabilities, ExecutionInfo, ExecutionPlan, JobSta
 import { NodeScheduler } from './scheduler/node-scheduler.js';
 import type { Scheduler } from './scheduler/node-scheduler.js';
 import { assertNever, FlashActError } from '../utils/errors.js';
+import { CaptchaTask } from '../captcha/workflow.js';
+import { VisionRecognizer } from '../captcha/ocr.js';
+import type { CaptchaRecognizer } from '../captcha/ocr.js';
+import type { CaptchaStatus } from '../captcha/types.js';
 
 export type EngineOptions = {
   readonly adapters?: Partial<Readonly<Record<Backend, BrowserAdapter>>>;
@@ -15,6 +19,7 @@ export type EngineOptions = {
   readonly adapterMode?: 'direct' | 'owned';
   readonly scheduling?: 'browser' | 'auto' | 'host';
   readonly scheduler?: Scheduler;
+  readonly captchaRecognizer?: CaptchaRecognizer;
 };
 type Job = {
   readonly plan: ExecutionPlan;
@@ -27,6 +32,8 @@ type Job = {
   statusRead?: Promise<JobStatus>;
   readonly schedules: Set<() => void>;
   readonly operations: Set<Promise<unknown>>;
+  captcha?: CaptchaStatus;
+  captchaTask?: CaptchaTask;
 };
 type Connection = {
   readonly backend: Backend;
@@ -92,6 +99,7 @@ export class JobEngine {
   private closing: Promise<void> | undefined;
   private readonly now: () => number;
   private readonly scheduler: Scheduler;
+  private recognizer: CaptchaRecognizer | undefined;
 
   constructor(private readonly options: EngineOptions = {}) {
     this.now = options.now ?? Date.now;
@@ -154,8 +162,10 @@ export class JobEngine {
       : undefined;
     const safe: JobStatus = { jobId: job.plan.jobId, state, executions,
       updatedAt: Math.max(previous.updatedAt, status.updatedAt),
-      ...(timing ? { timing } : {}), ...(job.execution ? { execution: job.execution } : {}) };
+      ...(timing ? { timing } : {}), ...(job.execution ? { execution: job.execution } : {}),
+      ...(job.captcha ? { captcha: job.captcha } : {}) };
     job.status = safe;
+    if (['UNKNOWN', 'FAILED', 'EXPIRED', 'CANCELLED', 'INVALIDATED'].includes(state)) job.captchaTask?.cancel();
     if (isTerminal(state) || state === 'DISPATCHED') this.disarm(job);
     // Timestamp-only reads are not evidence; page messages never enter the projection.
     if (previous.state !== state || previous.executions !== executions ||
@@ -367,6 +377,25 @@ export class JobEngine {
         await this.sdk(job, () => adapter.installRuntime(job.plan));
         job.installed = true;
         this.active(job);
+        if (job.plan.captcha) {
+          this.recognizer ??= this.options.captchaRecognizer ?? new VisionRecognizer();
+          const task = new CaptchaTask(job.plan, adapter, this.recognizer, captcha => {
+            job.captcha = captcha;
+            job.status = { ...job.status, captcha };
+            this.emit(job.status);
+          }, async () => {
+            const observed = await this.observe(job, adapter);
+            if (!observed || observed.executions !== 1) {
+              this.state(job, 'UNKNOWN');
+              throw new FlashActError('GUARD_REJECTED', 'Captcha requires observed original dispatch');
+            }
+          });
+          job.captchaTask = task;
+          await this.sdk(job, () => task.prepare());
+          this.active(job);
+          const running = this.sdk(job, () => task.run());
+          void running.catch(error => { this.cleanupErrors.push(error); });
+        }
         job.armSent = true;
         await this.sdk(job, () => adapter.arm(job.plan));
         this.active(job);
@@ -402,6 +431,8 @@ export class JobEngine {
     const job = this.job(id);
     if (this.closing) throw new FlashActError('INVALID_STATE', 'Engine is closing');
     if (job.cancellation) return job.cancellation;
+    job.captchaTask?.cancel();
+    if (job.captcha?.state === 'PREPARING') void this.recognizer?.close();
     job.stopRequested = true; this.disarm(job);
     const connection = this.connections.get(job.plan.backend);
     const timer = connection?.adapter.owner ? setTimeout(() => {
@@ -485,9 +516,10 @@ export class JobEngine {
     let rejectClose: (error: unknown) => void = () => undefined;
     this.closing = new Promise<void>((resolve, reject) => { resolveClose = resolve; rejectClose = reject; });
     for (const job of this.jobs.values()) {
-      job.stopRequested = true; this.disarm(job);
+      job.stopRequested = true; this.disarm(job); job.captchaTask?.cancel();
     }
-    void this.finishClose().then(resolveClose, rejectClose);
+    const ocrClosed = this.recognizer?.close() ?? Promise.resolve();
+    void Promise.all([this.finishClose(), ocrClosed]).then(() => resolveClose(), rejectClose);
     return this.closing;
   }
 }

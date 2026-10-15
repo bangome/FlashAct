@@ -5,6 +5,7 @@ import type {
   RuntimeHandle,
   TargetInfo,
 } from "../core/types.js";
+import type { CaptureRegion } from "../captcha/types.js";
 
 export type AdapterOwnerKind = "launched-browser" | "endpoint-client" | "aside-client";
 export type AdapterStopReason = "shutdown" | "deadline" | "cancel";
@@ -29,6 +30,10 @@ export interface BrowserAdapter {
   cancel(jobId: string): Promise<void>;
   getStatus(jobId: string): Promise<JobStatus>;
   evaluate(expression: string): Promise<unknown>;
+  /** Optional captcha operations bind every request to its original tab. */
+  evaluateCaptcha?(jobId: string, tabId: string, expression: string): Promise<unknown>;
+  capture?(tabId: string, region: CaptureRegion): Promise<string>;
+  closeCaptcha?(jobId: string): Promise<void>;
   disconnect(): Promise<void>;
 }
 

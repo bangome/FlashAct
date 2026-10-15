@@ -1,3 +1,4 @@
+import type { CaptchaPlan, CaptchaStatus } from "../captcha/types.js";
 export type Backend = "playwright" | "aside";
 
 export type Trigger =
@@ -35,6 +36,7 @@ export type ExecutionPlan = {
   readonly timezone: string;
   readonly expiresAt: number;
   readonly maxExecutions: 1;
+  readonly captcha?: CaptchaPlan;
   readonly verification: {
     readonly selector?: string;
     readonly timeoutMs: number;
@@ -99,6 +101,7 @@ export type JobStatus = {
   readonly message?: string;
   readonly timing?: JobTiming;
   readonly execution?: ExecutionInfo;
+  readonly captcha?: CaptchaStatus;
   readonly updatedAt: number;
 };
 

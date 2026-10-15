@@ -85,13 +85,30 @@ describe('service capabilities and lifetime', () => {
       const result = await client.callTool({ name: 'flashact_list_backends', arguments: {} });
       // Then
       expect(tools.tools).toHaveLength(10);
-      expect(result.content).toEqual([{ type: 'text', text: JSON.stringify({
+      const content = result.content;
+      expect(Array.isArray(content)).toBe(true);
+      const item = Array.isArray(content) ? content[0] : undefined;
+      if (!item || typeof item.text !== 'string') throw new Error('Missing structured capability response');
+      const { captcha, ...existing } = JSON.parse(item.text);
+      expect(existing).toEqual({
         backends: ['playwright', 'aside'], singleShot: true, foreground: true, asideRequiresExistingTab: true,
         capabilities: engine?.capabilities() ?? [
           { backend: 'playwright', connectionConfigured: false, transport: 'owned-worker', hostWake: true, shutdown: 'owned' },
           { backend: 'aside', connectionConfigured: true, transport: 'owned-aside-cli', hostWake: false, shutdown: 'owned' },
         ], defaultScheduling: engine?.defaultScheduling ?? 'auto',
-      }) }]);
+      });
+      expect(captcha).toMatchObject({
+        provider: 'macos-vision', requiresSwift: true, textImageOnly: true,
+        prepareBeforeArm: true, maxInputs: 1, maxSubmissions: 1,
+        planSchema: {
+          required: ['imageSelector', 'inputSelector'],
+          dependentRequired: { submitSelector: ['successSelector'] },
+          properties: {
+            length: { default: 6, minimum: 1, maximum: 32 },
+            timeoutMs: { default: 15000, minimum: 100, maximum: 120000 },
+          },
+        },
+      });
       expect(owned).not.toHaveBeenCalled(); expect(direct).not.toHaveBeenCalled();
     } finally { await client.close(); await server.close(); await engine?.close(); }
   });

@@ -11,6 +11,7 @@ import { ChromeOwner } from "./chrome-owner.js";
 import { dispatchable, pending, retainStatus } from "./runtime-jobs.js";
 import { deadlines, eventSchema, requestSchema, transportStatus } from "./worker-protocol.js";
 import type { WorkerMethod, WorkerRequest } from "./worker-protocol.js";
+import type { CaptureRegion } from "../../captcha/types.js";
 
 type PendingRequest = {
   readonly request: WorkerRequest;
@@ -93,6 +94,14 @@ export class OwnedPlaywrightAdapter implements BrowserAdapter {
   async cancel(jobId: string): Promise<void> { await this.rpc({ method: "cancel", argument: jobId }); }
   async getStatus(jobId: string): Promise<JobStatus> { return this.statusReply(jobId, await this.rpc({ method: "getStatus", argument: jobId })); }
   evaluate(expression: string): Promise<unknown> { return this.rpc({ method: "evaluate", argument: expression }); }
+  evaluateCaptcha(jobId: string, tabId: string, expression: string): Promise<unknown> {
+    return this.rpc({ method: "evaluateCaptcha", jobId, tabId, argument: expression });
+  }
+  async capture(tabId: string, region: CaptureRegion): Promise<string> {
+    const result = await this.rpc({ method: "capture", tabId, region });
+    if (typeof result !== "string") throw new FlashActError("INVALID_RESPONSE", "Invalid screenshot response");
+    return result;
+  }
 
   disconnect(): Promise<void> {
     if (this.disconnecting) return this.disconnecting;
@@ -169,7 +178,8 @@ export class OwnedPlaywrightAdapter implements BrowserAdapter {
     } finally { clearTimeout(timer); }
   }
 
-  private rpc(input: { readonly method: WorkerMethod; readonly argument?: string; readonly plan?: ExecutionPlan }, internal = false): Promise<unknown> {
+  private rpc(input: { readonly method: WorkerMethod; readonly argument?: string; readonly plan?: ExecutionPlan;
+    readonly jobId?: string; readonly tabId?: string; readonly region?: CaptureRegion }, internal = false): Promise<unknown> {
     try { this.ensureOpen(internal); }
     catch (error) { return Promise.reject(error); }
     const worker = this.worker;

@@ -30,6 +30,8 @@ async function execute(request: WorkerRequest): Promise<unknown> {
     case "cancel": return adapter.cancel(request.argument);
     case "getStatus": return adapter.getStatus(request.argument);
     case "evaluate": return adapter.evaluate(request.argument);
+    case "evaluateCaptcha": return adapter.evaluateCaptcha(request.jobId, request.tabId, request.argument);
+    case "capture": return adapter.capture(request.tabId, request.region);
     case "disconnect": return adapter.disconnect();
     default: return assertNever(request);
   }

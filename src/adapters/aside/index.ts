@@ -8,6 +8,9 @@ import { AsideTransport } from "./runner.js";
 import type { AsideCommandRunner } from "./runner.js";
 import { deadlines, transportStatus } from "../playwright/worker-protocol.js";
 import { AsideSession, asideChangeRead } from "./session.js";
+import { captureRegionSchema } from "../../captcha/schema.js";
+import type { CaptureRegion } from "../../captcha/types.js";
+import { cropViewportPng, viewportSchema } from "../../captcha/crop.js";
 
 export type { AsideAdapterOptions } from "../browser-adapter.js";
 export type { AsideCommandRunner } from "./runner.js";
@@ -70,6 +73,22 @@ export class AsideAdapter implements BrowserAdapter {
   async cancel(jobId: string): Promise<void> { await this.jobs.cancel(jobId); }
   async getStatus(jobId: string) { return this.jobs.status(jobId); }
   async evaluate(expression: string): Promise<unknown> { return this.evaluateTab(this.selectedId(), expression); }
+  async evaluateCaptcha(_jobId: string, tabId: string, expression: string): Promise<unknown> {
+    return this.evaluateTab(tabId, expression);
+  }
+  async capture(tabId: string, region: CaptureRegion): Promise<string> {
+    this.requireConnection();
+    captureRegionSchema.parse(region);
+    const result = z.strictObject({ image: z.string(), viewport: viewportSchema }).parse(
+      await this.transport.repl(`await attachBrowserTab(${JSON.stringify(tabId)});
+      const view=()=>({width:innerWidth,height:innerHeight,scrollX,scrollY});
+      const before=await page.evaluate(view);
+      const image=Buffer.from(await page.screenshot({type:"png"})).toString("base64");
+      const after=await page.evaluate(view);
+      if(JSON.stringify(before)!==JSON.stringify(after))throw new Error("Viewport changed during capture");
+      return {image,viewport:before};`));
+    return cropViewportPng(result.image, region, result.viewport);
+  }
 
   async disconnect(): Promise<void> {
     await this.cleanupConnection();
@@ -110,6 +129,7 @@ export class OwnedAsideAdapter extends AsideAdapter {
   private readonly managed: AsideSession;
   private readonly operations = new Set<Promise<unknown>>();
   private readonly readers = new Map<string, AsideSession>();
+  private readonly captchaReaders = new Map<string, AsideSession>();
   private readonly changes = new Set<Promise<void>>();
   private readonly optionsForReader: AsideAdapterOptions;
 
@@ -130,7 +150,7 @@ export class OwnedAsideAdapter extends AsideAdapter {
       stop: () => {
         if (this.stopping) return this.stopping;
         this.sealed = true;
-        this.stopping = Promise.all([this.managed.stop(), ...[...this.readers.values()].map(reader => reader.stop())]).then(async () => {
+        this.stopping = Promise.all([this.managed.stop(), ...[...this.readers.values(), ...this.captchaReaders.values()].map(reader => reader.stop())]).then(async () => {
           await Promise.allSettled([...this.operations]);
           await Promise.allSettled([...this.changes]);
           this.jobs.invalidate(undefined, "disconnect");
@@ -180,6 +200,24 @@ export class OwnedAsideAdapter extends AsideAdapter {
     });
   }
   override evaluate(expression: string): Promise<unknown> { return this.track(() => super.evaluate(expression)); }
+  override evaluateCaptcha(jobId: string, tabId: string, expression: string): Promise<unknown> {
+    return this.track(() => {
+      let reader = this.captchaReaders.get(jobId);
+      if (!reader) {
+        reader = new AsideSession(this.optionsForReader);
+        this.captchaReaders.set(jobId, reader);
+      }
+      return reader.evaluate(tabId, expression);
+    });
+  }
+  override capture(tabId: string, region: CaptureRegion): Promise<string> {
+    return this.track(() => this.managed.capture(tabId, region));
+  }
+  async closeCaptcha(jobId: string): Promise<void> {
+    const reader = this.captchaReaders.get(jobId);
+    await reader?.stop();
+    this.captchaReaders.delete(jobId);
+  }
   override getStatus(jobId: string): Promise<JobStatus> { return this.track(() => super.getStatus(jobId)).then(transportStatus); }
   protected override evaluateTab(tabId: string, expression: string): Promise<unknown> {
     return this.track(() => this.managed.evaluate(tabId, expression));

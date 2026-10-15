@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { FlashActError } from "../utils/errors.js";
 import { JOB_STATES } from "./types.js";
+import { captchaPlanSchema, captchaStatusSchema } from "../captcha/schema.js";
 import type {
   BrowserTab,
   ExecutionPlan,
@@ -80,6 +81,7 @@ export const planSchema = z.strictObject({
   timezone,
   expiresAt: integerEpochMs,
   maxExecutions: z.literal(1),
+  captcha: captchaPlanSchema.exactOptional(),
   verification: z.strictObject({
     selector: text.exactOptional(),
     timeoutMs: z.number().int().positive(),
@@ -91,7 +93,11 @@ export const planSchema = z.strictObject({
 }).refine((plan) => plan.target.url === plan.guards.approvedUrl, {
   path: ["guards", "approvedUrl"],
   message: "Approved URL must exactly match the target URL",
-}).readonly() satisfies z.ZodType<ExecutionPlan>;
+}).refine(plan => !plan.captcha || !plan.verification.selector || plan.verification.timeoutMs >= plan.captcha.timeoutMs,
+  { message: "Click verification must allow the configured captcha timeout", path: ["verification", "timeoutMs"] })
+  .refine(plan => !plan.captcha?.submitSelector || plan.captcha.submitSelector !== plan.target.selector,
+    { message: "Captcha must not submit through the original click selector", path: ["captcha", "submitSelector"] })
+  .readonly() satisfies z.ZodType<ExecutionPlan>;
 
 export const executionInfoSchema = z.strictObject({
   requested: z.enum(["browser", "auto", "host"]),
@@ -110,6 +116,7 @@ export const jobStatusSchema = z.strictObject({
   executions: count.max(1),
   message: z.string().exactOptional(),
   execution: executionInfoSchema.exactOptional(),
+  captcha: captchaStatusSchema.exactOptional(),
   timing: z.strictObject({
     targetEpochMs: epochMs.exactOptional(),
     schedulerEpochMs: epochMs.exactOptional(),

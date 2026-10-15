@@ -7,6 +7,9 @@ import { FlashActError } from "../../utils/errors.js";
 import { deadlines } from "../playwright/worker-protocol.js";
 import { decodeAsideOutput } from "./runner.js";
 import type { AsideCommandRunner } from "./runner.js";
+import { captureRegionSchema } from "../../captcha/schema.js";
+import type { CaptureRegion } from "../../captcha/types.js";
+import { cropViewportPng, viewportSchema } from "../../captcha/crop.js";
 
 const replySchema = z.object({
   isError: z.boolean().optional(),
@@ -47,9 +50,26 @@ export class AsideSession {
   get pid(): number | undefined { return this.transport?.pid ?? undefined; }
 
   async evaluate(tabId: string, expression: string, timeoutMs: number = deadlines.operation): Promise<unknown> {
-    const marker = `__FLASHACT_${randomUUID()}__`;
     const body = `const target = getTabByTargetId(${JSON.stringify(tabId)}) ?? await attachBrowserTab(${JSON.stringify(tabId)});
       return await target.evaluate(${JSON.stringify(expression)});`;
+    return this.read(body, timeoutMs);
+  }
+
+  async capture(tabId: string, region: CaptureRegion): Promise<string> {
+    captureRegionSchema.parse(region);
+    const result = z.strictObject({ image: z.string(), viewport: viewportSchema }).parse(
+      await this.read(`const target = getTabByTargetId(${JSON.stringify(tabId)}) ?? await attachBrowserTab(${JSON.stringify(tabId)});
+      const view = () => ({width:innerWidth,height:innerHeight,scrollX,scrollY});
+      const before = await target.evaluate(view);
+      const image = Buffer.from(await target.screenshot({type:"png"})).toString("base64");
+      const after = await target.evaluate(view);
+      if (JSON.stringify(before)!==JSON.stringify(after)) throw new Error("Viewport changed during capture");
+      return {image,viewport:before};`, deadlines.operation));
+    return cropViewportPng(result.image, region, result.viewport);
+  }
+
+  private async read(body: string, timeoutMs: number): Promise<unknown> {
+    const marker = `__FLASHACT_${randomUUID()}__`;
     const code = `await (async () => { try { const value = await (async () => { ${body} })();
       console.log(${JSON.stringify(marker)} + JSON.stringify(value === undefined ? {kind:"undefined"} : {kind:"value",value}));
       } catch(error) { console.log(${JSON.stringify(marker)} + JSON.stringify({kind:"error",message:String(error)})); } })()`;

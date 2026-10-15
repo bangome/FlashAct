@@ -7,6 +7,8 @@ import type { ExecutionPlan, JobStatus } from "../../core/types.js";
 import { browserTabsSchema } from "../../core/schema.js";
 import { FlashActError } from "../../utils/errors.js";
 import { RuntimeJobs } from "./runtime-jobs.js";
+import { captureRegionSchema } from "../../captcha/schema.js";
+import type { CaptureRegion } from "../../captcha/types.js";
 
 export type PlaywrightAdapterOptions = AdapterOptions & {
   readonly page?: Page;
@@ -105,6 +107,13 @@ export class PlaywrightAdapter implements BrowserAdapter {
   async cancel(jobId: string): Promise<void> { await this.jobs.cancel(jobId); }
   async getStatus(jobId: string) { return this.jobs.status(jobId); }
   async evaluate(expression: string): Promise<unknown> { return this.evaluateTab(this.selectedId(), expression); }
+  async evaluateCaptcha(_jobId: string, tabId: string, expression: string): Promise<unknown> {
+    return this.evaluateTab(tabId, expression);
+  }
+  async capture(tabId: string, region: CaptureRegion): Promise<string> {
+    const image = await this.pageFor(tabId).screenshot({ type: "png", clip: captureRegionSchema.parse(region), timeout: 4000 });
+    return image.toString("base64");
+  }
 
   async disconnect(): Promise<void> {
     await this.jobs.disconnect();

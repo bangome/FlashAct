@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { AdapterOptions } from '../adapters/browser-adapter.js';
 import type { JobEngine } from '../core/engine.js';
 import { parsePlan } from '../core/schema.js';
+import { captchaPlanSchema } from '../captcha/schema.js';
 import type { Trigger } from '../core/types.js';
 import { FlashActError } from '../utils/errors.js';
 import { parseTime } from './time.js';
@@ -44,11 +45,27 @@ const planOptionsSchema = connectionSchema.safeExtend({
   action: z.literal('click'), at: z.string().optional(), when: z.string().optional(),
   attribute: z.string().optional(), value: z.string().optional(), timezone: z.string().default('UTC'),
   verifySelector: z.string().min(1).optional(),
-  verifyTimeoutMs: z.coerce.number().int().positive().max(Number.MAX_SAFE_INTEGER).default(5000),
+  verifyTimeoutMs: z.coerce.number().int().positive().max(Number.MAX_SAFE_INTEGER).optional(),
+  captchaImage: z.string().optional(), captchaInput: z.string().optional(),
+  captchaSubmit: z.string().optional(), captchaSuccess: z.string().optional(),
+  captchaLength: z.coerce.number().optional(), captchaAlphabet: z.string().optional(),
+  captchaMinConfidence: z.coerce.number().optional(), captchaTimeoutMs: z.coerce.number().optional(),
 });
 
 export async function commandPlan(engine: JobEngine, input: unknown) {
   const options = planOptionsSchema.parse(input);
+  const captchaInput = {
+    imageSelector: options.captchaImage, inputSelector: options.captchaInput,
+    submitSelector: options.captchaSubmit, successSelector: options.captchaSuccess,
+    length: options.captchaLength, alphabet: options.captchaAlphabet,
+    minConfidence: options.captchaMinConfidence, timeoutMs: options.captchaTimeoutMs,
+  };
+  const captchaFields = Object.entries(captchaInput).filter(([, value]) => value !== undefined);
+  const captcha = captchaFields.length ? captchaPlanSchema.parse(Object.fromEntries(captchaFields)) : undefined;
+  const verifyTimeoutMs = options.verifyTimeoutMs ??
+    (captcha && options.verifySelector ? Math.max(5000, captcha.timeoutMs + 2000) : 5000);
+  if (captcha && options.verifySelector && verifyTimeoutMs < captcha.timeoutMs)
+    throw new FlashActError('INVALID_PLAN', '--verify-timeout-ms must cover --captcha-timeout-ms');
   let selector = options.selector;
   let condition = options.when;
   const shorthand = condition ? /^(.*):(enabled|appear|visible)$/.exec(condition) : null;
@@ -75,7 +92,7 @@ export async function commandPlan(engine: JobEngine, input: unknown) {
   return parsePlan({ schemaVersion: '1.0', jobId: randomUUID(), name: 'foreground', backend: options.backend,
     target: { tabId, selector, url: options.url ?? options.approvedUrl }, trigger, action: { type: options.action },
     timezone: options.timezone, expiresAt: scheduled?.type === 'SCHEDULED' ? scheduled.at + 60_000 : Date.now() + 86_400_000,
-    maxExecutions: 1, verification: { timeoutMs: options.verifyTimeoutMs,
+    maxExecutions: 1, ...(captcha === undefined ? {} : { captcha }), verification: { timeoutMs: verifyTimeoutMs,
       ...(options.verifySelector === undefined ? {} : { selector: options.verifySelector }) },
     guards: { approvedUrl: options.approvedUrl, allowIrreversible: options.approveIrreversible },
   });

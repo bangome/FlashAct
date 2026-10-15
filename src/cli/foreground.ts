@@ -3,8 +3,8 @@ import type { ExecutionPlan, JobStatus } from '../core/types.js';
 import { startControlServer } from './ipc.js';
 
 export function printStatus(status: JobStatus): void {
-  const { jobId, state, executions, timing, updatedAt, execution } = status;
-  process.stdout.write(`${JSON.stringify({ jobId, state, executions, timing, updatedAt, execution })}\n`);
+  const { jobId, state, executions, timing, updatedAt, execution, captcha } = status;
+  process.stdout.write(`${JSON.stringify({ jobId, state, executions, timing, updatedAt, execution, captcha })}\n`);
 }
 
 /** Signals seal the engine immediately, including during connection acquisition. */
@@ -59,7 +59,7 @@ export async function foreground(engine: JobEngine, plan: ExecutionPlan, signal:
     const report = (status: JobStatus) => {
       if (status.jobId !== plan.jobId) return;
       const evidence = JSON.stringify({ state: status.state, executions: status.executions,
-        execution: status.execution, timing: status.timing });
+        execution: status.execution, timing: status.timing, captcha: status.captcha });
       if (evidence !== previous) { printStatus(status); previous = evidence; }
     };
     unsubscribe = engine.subscribe(report);

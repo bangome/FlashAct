@@ -48,3 +48,7 @@ export { AsideAdapter } from "./adapters/aside/index.js";
 export { runBenchmark } from "./benchmark/index.js";
 export type { BenchmarkOptions } from "./benchmark/index.js";
 export { createMcpServer } from "./mcp/server.js";
+export type { CaptchaPlan, CaptchaStatus, CaptureRegion } from "./captcha/types.js";
+export { captchaPlanSchema, captchaStatusSchema, captureRegionSchema } from "./captcha/schema.js";
+export type { CaptchaRecognizer, CaptchaRecognition } from "./captcha/ocr.js";
+export { VisionRecognizer } from "./captcha/ocr.js";

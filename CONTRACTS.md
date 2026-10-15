@@ -223,6 +223,24 @@ still reconcile nonterminal runtime state; terminal retained reads need no brows
 
 ## Validation and errors
 
+### Optional post-click text-image CAPTCHA
+
+An optional `ExecutionPlan.captcha` configures a separate single-use workflow.
+The original click remains `maxExecutions: 1`; host-owned `JobStatus.captcha`
+records input and explicit optional submission separately, each bounded to one.
+Original `VERIFIED` never implies CAPTCHA verification. Submit requires an
+explicit selector and a fresh observed success selector. Existing approved URL,
+document identity, uniqueness and irreversible-action guards apply to this step.
+
+Default OCR uses a warm local macOS Vision/Swift producer prepared before arm;
+the SDK can inject a `CaptchaRecognizer`. Capture/recognition never obtains an
+answer from DOM text. Ambiguous/low-confidence output, changed challenge pixels,
+nonempty input, cancellation or uncertainty never causes retry or rearm.
+Capture and input are bound to the original tab. Main `UNKNOWN` stops the
+companion, and a failed input/submission acknowledgement remains CAPTCHA
+`UNKNOWN`. Shutdown joins the OCR child and owned observation processes.
+See `docs/captcha.md` for configuration, limits and nested outcomes.
+
 `src/core/schema.ts` exports `parsePlan`, `planSchema`, `triggerSchema`,
 `jobStatusSchema`, `targetInfoSchema`, `browserTabsSchema`, `runtimeHandleSchema`,
 and the two trigger-limit constants. Schema `.parse()` methods take unknown

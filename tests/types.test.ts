@@ -24,6 +24,7 @@ import type {
   RuntimeHandle,
   TargetInfo,
   Trigger,
+  CaptureRegion,
 } from "../src/index.js";
 
 it("keeps schema output identical to the public domain contracts", () => {
@@ -57,6 +58,9 @@ it("keeps asynchronous adapter signatures independent of implementation", () => 
     cancel(jobId: string): Promise<void>;
     getStatus(jobId: string): Promise<JobStatus>;
     evaluate(expression: string): Promise<unknown>;
+    evaluateCaptcha?(jobId: string, tabId: string, expression: string): Promise<unknown>;
+    capture?(tabId: string, region: CaptureRegion): Promise<string>;
+    closeCaptcha?(jobId: string): Promise<void>;
     disconnect(): Promise<void>;
   }>();
   expectTypeOf(wakeExpression).toEqualTypeOf<(jobId: string) => string>();
