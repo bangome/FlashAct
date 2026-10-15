@@ -86,6 +86,8 @@ export function createJob(plan: ExecutionPlan, services: JobServices) {
       verificationObserver?.disconnect();
       if (clickListener) window.removeEventListener("click", clickListener, true);
       if (errorListener) window.removeEventListener("error", errorListener);
+      document.removeEventListener("transitionend", check, true);
+      document.removeEventListener("animationend", check, true);
     };
     function verify(): void {
       if (!services.valid() || location.href !== plan.guards.approvedUrl) { invalidate(); return; }
@@ -111,6 +113,16 @@ export function createJob(plan: ExecutionPlan, services: JobServices) {
       // Claim the execution before invoking page code, including reentrant arm/status calls.
       result = { ...result, executions: 1 };
       update("DISPATCHED");
+      switch (plan.action.type) {
+        case "captcha":
+          // Dispatch only the prepared OCR workflow. Never click the image or an opener.
+          if (plan.verification.selector === undefined)
+            finish("VERIFIED", "CAPTCHA workflow dispatched; read nested CAPTCHA outcome");
+          else verify();
+          return;
+        case "click": break;
+        default: return dom.unreachable(plan.action.type);
+      }
       let listenerFailed = false;
       clickListener = (event) => {
         if (event.target === element && timing.clickEpochMs === undefined) {
@@ -150,7 +162,7 @@ export function createJob(plan: ExecutionPlan, services: JobServices) {
       if (target && (!target.isConnected || !target.matches(plan.target.selector) || (approvedRoot && !approvedRoot.contains(target)))) {
         finish("FAILED", "Cached action target detached or selector changed"); return;
       }
-      if (conditions.ready()) {
+      if (conditions.ready() && (plan.action.type === "click" || (target && dom.visible(target) && dom.enabled(target)))) {
         timing = { ...timing, conditionEpochMs: dom.now() };
         // Only check uniqueness; never replace the cached target with another match.
         if (!(target instanceof HTMLElement) || dom.select(plan.target.selector).length !== 1 || !dom.enabled(target) || !dom.visible(target)) {
@@ -163,14 +175,20 @@ export function createJob(plan: ExecutionPlan, services: JobServices) {
         return;
       }
       const future = targetTimes.filter((at) => at > Date.now());
-      const delay = Math.max(1, Math.min(25, plan.expiresAt - Date.now(), ...future.map((at) => at - Date.now())));
+      const maxDelay = plan.action.type === "captcha" ? 2_147_483_647 : 25;
+      const delay = Math.max(1, Math.min(maxDelay, plan.expiresAt - Date.now(), ...future.map((at) => at - Date.now())));
       timer = window.setTimeout(() => { timing = { ...timing, schedulerEpochMs: dom.now() }; check(); }, delay);
     }
     const roots = approvedRoot ? new Set<Node>([approvedRoot]) : conditions.roots;
+    if (plan.action.type === "captcha") roots.add(document.documentElement);
     roots.add(target?.parentElement ?? approvedRoot ?? document.body ?? document.documentElement);
     for (const root of roots) observer.observe(root, { childList: true, subtree: true, attributes: true, characterData: true });
     resizeObserver = new ResizeObserver(() => { timing = { ...timing, observerEpochMs: dom.now() }; check(); });
     if (target) resizeObserver.observe(target);
+    if (plan.action.type === "captcha") {
+      document.addEventListener("transitionend", check, true);
+      document.addEventListener("animationend", check, true);
+    }
     update("WAITING");
     wakeCheck = () => {
       if (!rejectRemoval(observer.takeRecords())) check();

@@ -42,7 +42,7 @@ export async function selectedTab(engine: JobEngine, input: unknown): Promise<st
 
 const planOptionsSchema = connectionSchema.safeExtend({
   approvedUrl: z.string(), approveIrreversible: z.boolean().default(false), selector: z.string().optional(),
-  action: z.literal('click'), at: z.string().optional(), when: z.string().optional(),
+  action: z.enum(['click', 'captcha']), at: z.string().optional(), when: z.string().optional(),
   attribute: z.string().optional(), value: z.string().optional(), timezone: z.string().default('UTC'),
   verifySelector: z.string().min(1).optional(),
   verifyTimeoutMs: z.coerce.number().int().positive().max(Number.MAX_SAFE_INTEGER).optional(),
@@ -70,6 +70,16 @@ export async function commandPlan(engine: JobEngine, input: unknown) {
   let condition = options.when;
   const shorthand = condition ? /^(.*):(enabled|appear|visible)$/.exec(condition) : null;
   if (shorthand) { selector ??= shorthand[1]; condition = shorthand[2]; }
+  switch (options.action) {
+    case 'click': break;
+    case 'captcha':
+      if (!captcha) throw new FlashActError('INVALID_PLAN', '--action captcha requires --captcha-image and --captcha-input');
+      selector ??= captcha.imageSelector;
+      if (selector !== captcha.imageSelector)
+        throw new FlashActError('INVALID_PLAN', '--action captcha requires the target selector to equal --captcha-image');
+      break;
+    default: throw new FlashActError('INVALID_PLAN', `Unknown action: ${options.action satisfies never}`);
+  }
   if (!selector) throw new FlashActError('INVALID_PLAN', 'A target selector is required');
   const conditions: Trigger[] = [];
   if (options.at) conditions.push({ type: 'SCHEDULED', at: parseTime(options.at, options.timezone) });

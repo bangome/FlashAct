@@ -1,4 +1,5 @@
 import { expect } from "vitest";
+import { z } from "zod";
 import type { Trigger } from "../../src/core/types.js";
 import { arm, clicks, install, plan, status, test, waitState } from "./runtime-fixture.js";
 
@@ -118,5 +119,40 @@ test("does not match the wrong specified value", async ({ page }) => {
   await page.locator("#signal").evaluate((element) => { element.textContent = "wrong"; });
   await waitState(page, "EXPIRED");
   // Then
+  expect(await clicks(page)).toBe(0);
+});
+
+test("waits for a CAPTCHA using events and expiry rather than a readiness interval", async ({ page }) => {
+  // Given: freeze the browser epoch so the only deadline has an exact duration.
+  const epoch = 1_800_000_000_000;
+  await page.evaluate(`Date.now=()=>${epoch};
+    document.querySelector('#action').hidden=true;
+    window.captchaWaitTimers=[];
+    const nativeTimeout=window.setTimeout;
+    window.setTimeout=(handler,delay,...args)=>{
+      captchaWaitTimers.push(delay);return nativeTimeout(handler,delay,...args);
+    };`);
+  await install(page, plan({ action: { type: "captcha" }, expiresAt: epoch + 60000,
+    captcha: { imageSelector: "#action", inputSelector: "#answer", alphabet: "digits",
+      length: 6, minConfidence: 0.8, timeoutMs: 15000 } }));
+  expect((await arm(page)).state).toBe("WAITING");
+  const delays: unknown = await page.evaluate("captchaWaitTimers");
+  expect(new Set(z.array(z.number()).parse(delays))).toEqual(new Set([60000]));
+  // When: subscribe before revealing the target, without forcing a wake.
+  await page.evaluate(() => new Promise<void>(resolve => {
+    const changed = () => {
+      if (globalThis.__flashactRuntime?.status("runtime-test").state === "VERIFIED") {
+        document.removeEventListener("__flashact_status__", changed); resolve();
+      }
+    };
+    document.addEventListener("__flashact_status__", changed);
+    const element = document.querySelector("#action");
+    if (!(element instanceof HTMLElement)) throw new Error("Missing fixture target");
+    element.hidden = false;
+  }));
+  // Then
+  const result = await status(page);
+  expect(result).toMatchObject({ state: "VERIFIED", executions: 1 });
+  expect(result.timing?.clickEpochMs).toBeUndefined();
   expect(await clicks(page)).toBe(0);
 });

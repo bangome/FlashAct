@@ -25,7 +25,8 @@ function install(key: string, plan: ExecutionPlan, makeDom: typeof createDom): b
   let submit: HTMLElement | undefined;
   let source = "";
   let imageVersion = 0;
-  const imageLoaded = () => { imageVersion++; };
+  let readyLoadEvent: Event | undefined;
+  const imageLoaded = (event: Event) => { if (event !== readyLoadEvent) imageVersion++; };
   let inputs = 0;
   let submissions = 0;
   let cancelled = false;
@@ -74,7 +75,7 @@ function install(key: string, plan: ExecutionPlan, makeDom: typeof createDom): b
     }
     return (!submit || !repeatsOriginal(submit)) && (!image || source === imageSource(image));
   }
-  function readNow(): View {
+  function readNow(event?: Event): View {
     if (cancelled) return view("cancelled");
     if (unknown) return view("unknown");
     if (document !== documentAtInstall || location.href !== plan.guards.approvedUrl) return view("invalid");
@@ -116,7 +117,12 @@ function install(key: string, plan: ExecutionPlan, makeDom: typeof createDom): b
       || region.width > 2048 || region.height > 2048) return view("invalid");
     const currentSource = imageSource(nextImage);
     if (image && (source !== currentSource || JSON.stringify(readyRegion) !== JSON.stringify(region))) return view("invalid");
-    if (!image) nextImage.addEventListener("load", imageLoaded);
+    if (!image) {
+      // A capturing document listener can bind during this very load dispatch.
+      // Do not mistake its later target phase for a second image load.
+      readyLoadEvent = event?.type === "load" && event.target === nextImage ? event : undefined;
+      nextImage.addEventListener("load", imageLoaded);
+    }
     image = nextImage; input = nextInput;
     if (nextSubmit instanceof HTMLElement) submit = nextSubmit;
     source = currentSource; readyRegion = region;
@@ -156,8 +162,8 @@ function install(key: string, plan: ExecutionPlan, makeDom: typeof createDom): b
     read: leaseMs => new Promise(resolve => {
       let timer: ReturnType<typeof setTimeout> | undefined;
       let settled = false;
-      const observer = new MutationObserver(check);
-      const resized = new ResizeObserver(check);
+      const observer = new MutationObserver(() => check());
+      const resized = new ResizeObserver(() => check());
       function finish(result: View): void {
         if (settled) return;
         settled = true; clearTimeout(timer); observer.disconnect(); resized.disconnect();
@@ -166,8 +172,8 @@ function install(key: string, plan: ExecutionPlan, makeDom: typeof createDom): b
         window.removeEventListener("pagehide", lost);
         readers.delete(check); resolve(result);
       }
-      function check(): void {
-        const current = readNow();
+      function check(event?: Event): void {
+        const current = readNow(event);
         if (current.state !== "waiting" && current.state !== "submitted" && !(current.state === "filled" && config.successSelector))
           finish(current);
       }

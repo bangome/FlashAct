@@ -77,7 +77,7 @@ export const planSchema = z.strictObject({
     watchRoot: text.exactOptional(),
   }).readonly(),
   trigger: triggerSchema,
-  action: z.strictObject({ type: z.literal("click") }).readonly(),
+  action: z.strictObject({ type: z.enum(["click", "captcha"]) }).readonly(),
   timezone,
   expiresAt: integerEpochMs,
   maxExecutions: z.literal(1),
@@ -93,7 +93,11 @@ export const planSchema = z.strictObject({
 }).refine((plan) => plan.target.url === plan.guards.approvedUrl, {
   path: ["guards", "approvedUrl"],
   message: "Approved URL must exactly match the target URL",
-}).refine(plan => !plan.captcha || !plan.verification.selector || plan.verification.timeoutMs >= plan.captcha.timeoutMs,
+}).refine(plan => plan.action.type === "click" || Boolean(plan.captcha),
+  { message: "Captcha-only actions require captcha configuration", path: ["captcha"] })
+  .refine(plan => plan.action.type === "click" || plan.target.selector === plan.captcha?.imageSelector,
+    { message: "Captcha-only target must be the configured image selector", path: ["target", "selector"] })
+  .refine(plan => !plan.captcha || !plan.verification.selector || plan.verification.timeoutMs >= plan.captcha.timeoutMs,
   { message: "Click verification must allow the configured captcha timeout", path: ["verification", "timeoutMs"] })
   .refine(plan => !plan.captcha?.submitSelector || plan.captcha.submitSelector !== plan.target.selector,
     { message: "Captcha must not submit through the original click selector", path: ["captcha", "submitSelector"] })

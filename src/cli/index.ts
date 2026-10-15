@@ -43,7 +43,7 @@ export function createCli(): Command {
     }));
   for (const name of ['schedule', 'watch', 'arm']) {
     const command = connection(program.command(`--${name}`).alias(name)).requiredOption('--approved-url <url>', 'explicit exact URL approval')
-      .requiredOption('--action <action>', 'single-shot click only').option('--selector <selector>', 'target CSS selector')
+      .requiredOption('--action <action>', 'single-shot click or captcha').option('--selector <selector>', 'target CSS selector; captcha defaults to --captcha-image')
       .option('--approve-irreversible', 'explicit irreversible-action approval').option('--timezone <IANA>', 'clock timezone', 'UTC')
       .option('--attribute <name>', 'attribute to observe').option('--value <value>', 'exact attribute/text value')
       .option('--scheduling <auto|browser|host>', 'scheduling policy (transport always owned)', 'auto')

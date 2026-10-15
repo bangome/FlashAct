@@ -32,7 +32,7 @@ export type ExecutionPlan = {
     readonly watchRoot?: string;
   };
   readonly trigger: Trigger;
-  readonly action: { readonly type: "click" };
+  readonly action: { readonly type: "click" | "captcha" };
   readonly timezone: string;
   readonly expiresAt: number;
   readonly maxExecutions: 1;

@@ -387,7 +387,7 @@ export class JobEngine {
             const observed = await this.observe(job, adapter);
             if (!observed || observed.executions !== 1) {
               this.state(job, 'UNKNOWN');
-              throw new FlashActError('GUARD_REJECTED', 'Captcha requires observed original dispatch');
+              throw new FlashActError('GUARD_REJECTED', 'Captcha requires observed action dispatch');
             }
           });
           job.captchaTask = task;

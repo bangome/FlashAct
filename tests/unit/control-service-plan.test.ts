@@ -98,6 +98,7 @@ describe('service capabilities and lifetime', () => {
         ], defaultScheduling: engine?.defaultScheduling ?? 'auto',
       });
       expect(captcha).toMatchObject({
+        standaloneAction: 'captcha',
         provider: 'macos-vision', requiresSwift: true, textImageOnly: true,
         prepareBeforeArm: true, maxInputs: 1, maxSubmissions: 1,
         planSchema: {

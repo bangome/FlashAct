@@ -1,15 +1,23 @@
 ---
-name: flashact
-description: Automatically use FlashAct for requested browser actions that must run promptly at a specified time or when an element becomes enabled, appears, becomes visible, or changes text or attributes. Use for scheduled clicks, waiting for an enabled button, and combined time-plus-element conditions, including tasks in Aside. Prearm one guarded action instead of repeatedly polling the page or waiting for an agent round trip.
+name: "flashact"
+description: "Use FlashAct to wait for a text-image CAPTCHA to appear and immediately recognize (OCR) and fill it once, without another agent turn or opener click. Also use for scheduled or element-ready browser clicks and their optional post-click CAPTCHA workflow, including Aside. Read when asked about FlashAct capabilities."
 ---
 
 # FlashAct
+
+FlashAct supports single-shot clicks, independently armed text-image CAPTCHA
+waiting, and an optional post-click CAPTCHA companion. It captures cropped
+pixels, runs prepared local macOS Vision OCR and fills once, with optional
+explicit submission and success verification. It is not general screen
+understanding. CAPTCHA-only waiting needs no opener or image click.
 
 ## Automatic selection
 
 When the user's requested browser action has a time or element-readiness condition,
 select FlashAct without requiring them to name it. Prepare and arm before the
 condition is reached; let the document runtime dispatch the single click.
+For a CAPTCHA-only request, prearm `--action captcha --when appear` instead:
+prepare OCR before waiting and let the image-ready event start recognition/input.
 
 | Requested behavior | Choose |
 | --- | --- |
@@ -20,13 +28,14 @@ condition is reached; let the document runtime dispatch the single click.
 | Click when an attribute or text matches | `fa --watch --when attribute` or `text` |
 | Time reached AND target currently enabled | `fa --arm --at "$AT" --when enabled` |
 | Arbitrary nested AND/OR conditions | FlashAct MCP with a full execution plan |
+| Wait for a text-image CAPTCHA, then recognize and fill once | `fa --watch --action captcha --when appear --captcha-image "$IMAGE_SELECTOR" --captcha-input "$INPUT_SELECTOR"` |
+| Original click followed by a text-image CAPTCHA | Add `--captcha-image` and `--captcha-input` to the original action command; see Optional text-image CAPTCHA |
 
 Use ordinary browser interaction for immediate actions with no timing condition,
-discovery, general typing, navigation and scrolling. FlashAct's primary action is
-one synthetic DOM click. Its optional text-image CAPTCHA companion adds one
-guarded input and explicitly configured optional verification click, not general
-Playwright actions or trusted user input. Configure it before the original click;
-never repeat that click to handle an already-open or failed challenge.
+discovery, general typing, navigation and scrolling. Use the CAPTCHA-only action
+for an already-open challenge rather than repeating its original opener click.
+Click plans can retain the preconfigured companion. Neither action provides
+general Playwright actions or trusted physical user input.
 
 ## Preparation
 
@@ -172,7 +181,8 @@ and `flashact_inspect_target` for the selected tab/selector. Then call
 `flashact_get_status`/`flashact_get_result`.
 
 Supply a complete decoded plan with `schemaVersion: "1.0"`, a fresh `jobId`,
-`name`, `backend`, exact `target`, `trigger`, `action: { type: "click" }`,
+`name`, `backend`, exact `target`, `trigger`, `action: { type: "click" }` or
+`action: { type: "captcha" }`,
 `timezone`, integer epoch `expiresAt`, `maxExecutions: 1`, a `verification`
 object with positive `timeoutMs`, and `guards` with the identical `approvedUrl`.
 Use supported nested AND/OR triggers from the checkout's `CONTRACTS.md`.
@@ -181,6 +191,23 @@ The CLI has no JSON-plan loader. An MCP plan's epochs are absolute timestamps;
 the timezone label does not reinterpret them.
 
 ## Optional text-image CAPTCHA
+
+To wait independently without clicking, use the CAPTCHA-only action:
+
+```sh
+fa --watch --backend "$BACKEND" --tab "$TAB_ID" \
+  --url "$URL" --approved-url "$URL" --action captcha --when appear \
+  --captcha-image "$IMAGE_SELECTOR" --captcha-input "$INPUT_SELECTOR"
+```
+
+`--selector` defaults to the configured image and cannot name a different target.
+The image may be missing or hidden at arm; wait for visibility and actual image
+load before capture/OCR/input. An already-ready image can be processed at once.
+MCP uses `action.type: "captcha"`, the same image in `target.selector`, an
+`ELEMENT_APPEAR` trigger and the existing `plan.captcha` fields.
+Keep the foreground owner alive; no extra agent turn or readiness-poll loop is
+needed. Before dispatch the plan expiry bounds waiting; after dispatch the
+CAPTCHA timeout applies. Warm OCR before the expected appearance, not afterwards.
 
 For an explicitly requested text-image CAPTCHA after the original click, add
 `--captcha-image "$IMAGE_SELECTOR" --captcha-input "$INPUT_SELECTOR"` with exact,
@@ -200,7 +227,7 @@ with `flashact_list_backends`. No additional tools are required.
 
 Default OCR needs local macOS native Vision and Swift. Prepare/compile before
 arm with enough lead time; no keys or downloads. Appearance detection is
-preinstalled, event-driven and gated on the original click's `executions: 1`;
+preinstalled, event-driven and gated on the chosen action's `executions: 1`;
 OCR captures cropped pixels. Refuse stale/changed images, ambiguous targets,
 filled inputs and text outside the confidence/alphabet/exact-length limits.
 Grid, slider and third-party iframe challenges are unsupported.
@@ -208,6 +235,8 @@ Grid, slider and third-party iframe challenges are unsupported.
 Read nested `status.captcha`: PREPARING, WAITING, CAPTURING, RECOGNIZING, FILLED,
 SUBMITTED, VERIFIED, FAILED, UNKNOWN or CANCELLED. Main `state`/`executions`
 remain the original click lifecycle; main VERIFIED is never CAPTCHA success.
+On CAPTCHA-only jobs, `executions: 1` means one workflow dispatch, not a DOM
+click or input, and `clickEpochMs` remains absent. Actual inputs remain nested.
 FILLED and SUBMITTED also do not establish success. Report nested inputs and
 submissions (each 0 or 1), confidence/error and available stage timings
 `captureMs`, `recognitionMs`, `inputMs`, `totalMs`, never CAPTCHA text or images.

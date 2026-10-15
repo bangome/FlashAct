@@ -2,6 +2,14 @@
 
 Single-shot browser DOM clicks triggered by a scheduled instant, an element condition, or a combination of conditions. FlashAct is a Node.js 22 / npm project, not a browser extension, daemon, or guaranteed reservation service.
 
+Text-image CAPTCHA waiting can be armed independently with `--watch --action
+captcha --when appear --captcha-image <css> --captcha-input <css>`. Local macOS
+Vision OCR prepares before waiting, then fills once when the image is ready;
+no opener or image click is required. The post-click companion remains supported.
+Explicitly configured submission requires success verification. This is not
+general screen understanding; see
+[CAPTCHA configuration](docs/captcha.md).
+
 **Safety boundary:** the browser runtime calls `HTMLElement.prototype.click.call(element)`. This generates an **untrusted synthetic DOM event**, not trusted browser input or a physical gesture. A click receipt does not establish site acceptance, payment, reservation, or network success. Use a meaningful verification selector and independently verify consequential outcomes. `UNKNOWN` is terminal; it must not cause an automatic retry. Every plan requires `maxExecutions: 1`.
 
 ## Repository readiness
@@ -223,6 +231,14 @@ Native hidden comparison and method are recorded in
 [hidden scheduling improvement](docs/hidden-scheduling-improvement.md).
 
 ## Aside is a separate integration
+
+The coding-agent skill at `.agents/skills/flashact/SKILL.md` is not automatically
+an Aside account skill. For Aside's own agent, install a `flashact` user skill at
+`<accountRoot>/skills/user/flashact/SKILL.md` using Aside's `skill-creator`
+instructions. The account root is profile-specific, for example `~/.aside/u/0`.
+Include OCR and CAPTCHA input in its discovery description and have it read the
+full installed FlashAct instructions. Existing chats may need an explicit skill
+reload or a new task; never rearm an action just to refresh instructions.
 
 The integrated Aside adapter uses official capabilities in separate discovery and attachment steps: `listBrowserTabs()` → approved exact target ID → `attachBrowserTab(targetId)` → `page.evaluate(...)`. Do not copy profiles, guess private CDP endpoints, or replace Aside with Playwright. Keep an ordinary, operator-opened Aside UI tab alive; the adapter attaches rather than owning a new tab. `AsideAdapter` rejects `options.url`, endpoint, launch, and userDataDir because a one-shot `openTab` tab can disappear with its owner. CLI `--url` for Aside is a target URL filter/plan value, not permission to create or navigate a tab; `--tab` is mandatory for inspection/execution.
 

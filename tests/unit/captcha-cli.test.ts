@@ -27,7 +27,8 @@ describe('CAPTCHA CLI plan boundary', () => {
     expect(plan.verification.timeoutMs).toBe(5000);
   });
 
-  it.each(['--watch', '--schedule', '--arm'])('parses all CAPTCHA flags through %s', async name => {
+  it.each(['--watch', '--schedule', '--arm'].flatMap(name =>
+    ['click', 'captcha'].map(action => ({ name, action }))))('parses all CAPTCHA flags through $name with $action', async ({ name, action }) => {
     // Given
     const program = createCli();
     const command = program.commands.find(item => item.name() === name);
@@ -39,17 +40,50 @@ describe('CAPTCHA CLI plan boundary', () => {
         ['--at', '2100-01-01T00:00:00Z', '--when', 'enabled'];
     // When
     await program.parseAsync([name, '--tab', input.tab, '--approved-url', input.approvedUrl,
-      '--action', 'click', '--selector', '#reserve', ...timing,
+      '--action', action, ...(action === 'click' ? ['--selector', '#reserve'] : []), ...timing,
       '--verify-selector', '#receipt', '--captcha-image', '#image', '--captcha-input', '#answer',
       '--captcha-submit', '#submit', '--captcha-success', '#success', '--captcha-length', '4',
       '--captcha-alphabet', 'digits', '--captcha-min-confidence', '0.93', '--captcha-timeout-ms', '22000'],
     { from: 'user' });
     const plan = await commandPlan(engine, parsed);
     // Then
+    expect(plan.action.type).toBe(action);
+    expect(plan.target.selector).toBe(action === 'click' ? '#reserve' : '#image');
     expect(plan.captcha).toEqual({ imageSelector: '#image', inputSelector: '#answer',
       submitSelector: '#submit', successSelector: '#success', length: 4, alphabet: 'digits',
       minConfidence: 0.93, timeoutMs: 22000 });
     expect(plan.verification).toEqual({ selector: '#receipt', timeoutMs: 24000 });
+  });
+
+  it.each([
+    { selector: undefined, when: 'appear' },
+    { selector: '#image', when: 'appear' },
+    { selector: undefined, when: '#image:appear' },
+  ])('uses the CAPTCHA image as the appearance target: %j', async options => {
+    // Given
+    const standalone = { ...input, ...captcha, action: 'captcha', ...options };
+    // When
+    const plan = await commandPlan(engine, standalone);
+    // Then
+    expect(plan.action).toEqual({ type: 'captcha' });
+    expect(plan.target.selector).toBe('#image');
+    expect(plan.trigger).toEqual({ type: 'ELEMENT_APPEAR', selector: '#image' });
+  });
+
+  it.each([
+    { selector: undefined },
+    { selector: '#image' },
+    { ...captcha, selector: '#reserve' },
+    { ...captcha, selector: undefined, when: '#reserve:appear' },
+    { captchaImage: '#image', selector: undefined },
+    { ...captcha, selector: undefined, captchaSubmit: '#submit' },
+    { ...captcha, selector: undefined, verifySelector: '#receipt', verifyTimeoutMs: '14999' },
+  ])('rejects invalid standalone CAPTCHA before tab acquisition: %j', async options => {
+    // Given
+    const listing = vi.spyOn(engine, 'listTabs');
+    // When / Then
+    await expect(commandPlan(engine, { ...input, tab: undefined, action: 'captcha', ...options })).rejects.toThrow();
+    expect(listing).not.toHaveBeenCalled();
   });
 
   it('applies schema defaults and extends primary verification', async () => {

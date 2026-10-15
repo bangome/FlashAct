@@ -20,10 +20,11 @@ type ExecutionPlan = {
   backend: "playwright" | "aside";
   target: { tabId: string; selector: string; url: string; watchRoot?: string };
   trigger: Trigger;
-  action: { type: "click" };
+  action: { type: "click" | "captcha" };
   timezone: string;
   expiresAt: number;
   maxExecutions: 1;
+  captcha?: CaptchaPlan;
   verification: { selector?: string; timeoutMs: number };
   guards: { approvedUrl: string; allowIrreversible: boolean };
 };
@@ -37,6 +38,11 @@ type Trigger =
 ```
 
 - Only single-shot execution is supported: `maxExecutions` must equal `1`.
+- `action.type: "captcha"` requires `captcha` and a target selector identical to
+  `captcha.imageSelector`. It dispatches the prepared OCR workflow without a DOM
+  click. Use an appearance trigger to admit a missing image; a hidden image waits
+  until visible. `executions: 1` counts workflow dispatch, not a click or input,
+  and `clickEpochMs` remains absent. Existing click plans retain their meanings.
 - Trigger depth is at most **8**, counting the root as depth 1. Each composite
   has **1–32** conditions. The schema itself is depth-bounded, including for
   cyclic JavaScript inputs; it is not an unbounded parser with a later check.
@@ -223,9 +229,15 @@ still reconcile nonterminal runtime state; terminal retained reads need no brows
 
 ## Validation and errors
 
-### Optional post-click text-image CAPTCHA
+### Text-image CAPTCHA waiting and optional post-click companion
 
-An optional `ExecutionPlan.captcha` configures a separate single-use workflow.
+`action.type: "captcha"` can wait independently for an image to appear and then
+recognize and fill once. OCR is prepared before arming. Observers detect image
+visibility/load; scheduled and expiry deadlines remain bounded without recurring
+readiness polling. No opener or image click is synthesized. Existing
+create/validate/arm/cancel/status APIs own the same workflow and resources.
+
+On click actions, optional `ExecutionPlan.captcha` configures the post-click workflow.
 The original click remains `maxExecutions: 1`; host-owned `JobStatus.captcha`
 records input and explicit optional submission separately, each bounded to one.
 Original `VERIFIED` never implies CAPTCHA verification. Submit requires an

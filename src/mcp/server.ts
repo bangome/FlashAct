@@ -22,6 +22,7 @@ export function createMcpServer(engine = new JobEngine({ adapterMode: 'owned', s
     backends: ['playwright', 'aside'], singleShot: true, foreground: true, asideRequiresExistingTab: true,
     capabilities: engine.capabilities(), defaultScheduling: engine.defaultScheduling,
     captcha: {
+      standaloneAction: 'captcha',
       provider: 'macos-vision', requiresSwift: true, textImageOnly: true,
       prepareBeforeArm: true, maxInputs: 1, maxSubmissions: 1,
       planSchema: { ...z.toJSONSchema(captchaPlanSchema, { io: 'input' }),
@@ -32,7 +33,7 @@ export function createMcpServer(engine = new JobEngine({ adapterMode: 'owned', s
   server.registerTool('flashact_inspect_target', { inputSchema: { backend, tabId: z.string().min(1), selector: z.string().min(1) } },
     async args => response(() => engine.inspectTarget(args.backend, args.tabId, args.selector)));
   server.registerTool('flashact_create_job', {
-    description: 'Create, not arm, an ExecutionPlan. Optional plan.captcha supports text-image CAPTCHA only: required imageSelector/inputSelector; optional submitSelector requires successSelector. Defaults: alphabet uppercase-alphanumeric (also alphanumeric/digits), length 6 (1..32), minConfidence 0.8 (0..1), timeoutMs 15000 (100..120000). See flashact_list_backends captcha.planSchema. A primary verification.selector requires verification.timeoutMs >= captcha.timeoutMs. Local macOS Vision/Swift prepares before arm; no keys/downloads. One input and explicit optional submission, no retry/reconnect/rearm. Read nested status.captcha separately: main VERIFIED is not CAPTCHA success. No CAPTCHA text/images in output.',
+    description: 'Create, not arm, an ExecutionPlan with action.type click or captcha. Independent captcha requires plan.captcha and target.selector exactly equal to captcha.imageSelector: prearm it to wait for the image without an agent round trip or dummy click. Optional plan.captcha on click retains click-then-CAPTCHA behavior. Text-image CAPTCHA only: required imageSelector/inputSelector; optional submitSelector requires successSelector. Defaults: alphabet uppercase-alphanumeric (also alphanumeric/digits), length 6 (1..32), minConfidence 0.8 (0..1), timeoutMs 15000 (100..120000). See flashact_list_backends captcha.planSchema. A primary verification.selector requires verification.timeoutMs >= captcha.timeoutMs. Local macOS Vision/Swift prepares before arm; no keys/downloads. One input and explicit optional submission, no retry/reconnect/rearm. For captcha, executions 1 means one workflow dispatch, not a DOM click; clickEpochMs is absent. Nested status.captcha inputs/submissions and state are fill/submission truth; main VERIFIED is not CAPTCHA success. No CAPTCHA text/images in output.',
     inputSchema: { plan: z.unknown() },
   }, async args => response(() => engine.createJob(args.plan)));
   server.registerTool('flashact_validate_job', { inputSchema: { jobId } }, async args => response(() => engine.validateJob(args.jobId)));

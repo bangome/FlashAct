@@ -50,6 +50,29 @@ describe("execution plan boundary", () => {
     expect(result.expiresAt).toBe(1);
   });
 
+  it("accepts a captcha-only workflow bound to its image", () => {
+    // Given
+    const input = { ...plan, action: { type: "captcha" },
+      target: { ...plan.target, selector: "#image" },
+      trigger: { type: "ELEMENT_APPEAR", selector: "#image" },
+      captcha: { imageSelector: "#image", inputSelector: "#answer" } };
+    // When
+    const result = parsePlan(input);
+    // Then
+    expect(result).toMatchObject({ action: { type: "captcha" }, maxExecutions: 1,
+      captcha: { imageSelector: "#image", inputSelector: "#answer", length: 6 } });
+  });
+
+  it("rejects a captcha-only workflow targeting a different element", () => {
+    // Given
+    const input = { ...plan, action: { type: "captcha" },
+      captcha: { imageSelector: "#image", inputSelector: "#answer" } };
+    // When
+    const result = planSchema.safeParse(input);
+    // Then
+    expect(result.success).toBe(false);
+  });
+
   it.each([
     { schemaVersion: "2.0" },
     { jobId: " " },
@@ -59,6 +82,7 @@ describe("execution plan boundary", () => {
     { maxExecutions: 2 },
     { maxExecutions: "1" },
     { action: { type: "submit" } },
+    { action: { type: "captcha" } },
     { timezone: "Invalid/Zone" },
     { expiresAt: -1 },
     { expiresAt: 1.5 },

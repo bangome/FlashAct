@@ -1,9 +1,10 @@
 # Text-image CAPTCHA integration
 
-FlashAct supports one text-image CAPTCHA following the original single-shot
-click. It does not solve image grids, sliders or third-party iframe challenges.
-There is no universal success guarantee. Main click `state` and `executions`
-keep their original meaning; main `VERIFIED` is never CAPTCHA success.
+FlashAct can wait for a text-image CAPTCHA to appear, recognize it and fill once
+without an opener click or another agent turn. It also supports the original
+post-click companion. Image grids, sliders and third-party iframe challenges are
+unsupported. There is no universal success guarantee. Main `VERIFIED` is never
+CAPTCHA success; inspect the nested outcome.
 
 ## Preparation and selectors
 
@@ -37,6 +38,28 @@ new success evidence.
 
 For an already inspected and approved tab, using its exact tab ID and URL:
 
+### Wait for an image without clicking
+
+```sh
+fa --watch --backend "$BACKEND" --tab "$TAB_ID" \
+  --url "$URL" --approved-url "$URL" --action captcha --when appear \
+  --captcha-image '#captcha-image' --captcha-input '#captcha-answer'
+```
+
+Arm this before the challenge is expected. OCR compiles/warms during preparation,
+then the owned process stays alive. The image may initially be missing or hidden;
+FlashAct waits for visibility and actual image load, captures pixels, recognizes
+and fills once without another agent round trip. An already-visible image can
+be processed immediately. `--selector` defaults to `--captcha-image`; an explicit
+different selector rejects. No opener, reserve button or image is clicked.
+
+Before image dispatch, waiting is bounded by plan expiry (the reactive CLI
+default is 24 hours). After dispatch, `captcha.timeoutMs` bounds image readiness,
+recognition, input and optional verification, also capped by plan expiry.
+Cancel when the authorized waiting window ends; no retry or rearm is automatic.
+
+### Click, then recognize an image
+
 ```sh
 fa --watch --backend "$BACKEND" --tab "$TAB_ID" \
   --url "$URL" --approved-url "$URL" --selector '#reserve' \
@@ -57,8 +80,11 @@ verification selector, its normal default remains 5000 ms.
 ## Detection, capture and outcomes
 
 Appearance detection is installed before arming and activated only after the
-original click has `executions: 1`. Events detect the challenge rather than an
-agent polling the page. Capture uses cropped image pixels, not DOM text.
+chosen action has `executions: 1`. On click plans that means the original click;
+on CAPTCHA-only plans it means a workflow dispatch marker, not a DOM click.
+CAPTCHA-only readiness uses DOM/resize/load/animation events and scheduled/expiry
+deadlines, without a recurring readiness timer or agent polling the page.
+Capture uses cropped image pixels, not DOM text.
 On Aside, FlashAct captures the viewport and crops locally because the tested
 Aside screenshot API ignored clip origins. Only the resulting region is sent to
 OCR; full viewport pixels are not logged or saved. The image must be inside the
@@ -88,6 +114,9 @@ describe the decision without disclosing recognized text. Optional `timing`
 contains `captureMs`, `recognitionMs`, `inputMs` and `totalMs` when available;
 these measure individual stages and total work, not a latency guarantee.
 CAPTCHA text and images must not be printed or logged.
+On CAPTCHA-only jobs, main `executions: 1` counts workflow dispatch only;
+`clickEpochMs` is absent, and actual input/submission counts remain nested.
+Main `VERIFIED` with nested `WAITING` or `RECOGNIZING` is not completion.
 
 No retry, reconnect or rearm occurs on failure, uncertainty or connection loss.
 Inspect application evidence manually; never automatically create a duplicate
@@ -95,7 +124,22 @@ job. Keep the foreground owner alive through the nested CAPTCHA outcome, then
 stop it and await shutdown. Leave existing user tabs, including booking tabs,
 intact.
 
-## October 15, 2026 local acceptance
+## October 15, 2026 independent-wait acceptance
+
+Authored localhost runs of the compiled CLI and actual Aside waited with the
+image hidden, then used native Vision after an external appearance event. Each
+observed zero opener/image clicks, one input, one explicit submit and one
+independently accepted HTTP request. Example appearance-to-input measurements
+were 233.1 ms for the CLI and 466.3 ms for Aside after preparation. These are
+individual local samples, not guaranteed latency. Owned processes and tabs were
+joined/closed without using an existing booking session.
+
+Regression cases cover absent/hidden images, fixed-size and intrinsic-size
+images with held PNG responses, first load versus later same-URL reload,
+cancellation before appearance, higher-ancestor opacity/visibility changes after
+initial resize delivery, and no repeated input after later mutations.
+
+## October 15, 2026 original post-click acceptance
 
 The authored localhost challenge was captured from actual pixels, recognized by
 native Vision and accepted once by an independent HTTP handler. After OCR
@@ -143,6 +187,9 @@ This fragment is not a full execution plan. Create, validate and arm remain
 separate calls. If the full plan has `verification.selector`, set
 `verification.timeoutMs >= captcha.timeoutMs`; MCP does not choose CLI defaults.
 Read `captcha` through existing status/result tools, separately from main state.
+For independent waiting, set `action: { "type": "captcha" }`, use the same image
+selector in `target.selector`, and use an `ELEMENT_APPEAR` trigger for that image.
+`flashact_list_backends.captcha.standaloneAction` advertises this action.
 
 The package root exports `CaptchaPlan`, `CaptchaStatus`, `CaptureRegion`,
 `captchaPlanSchema`, `captchaStatusSchema`, `captureRegionSchema`,
