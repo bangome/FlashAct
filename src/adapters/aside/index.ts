@@ -7,7 +7,7 @@ import { RuntimeJobs, pending } from "../playwright/runtime-jobs.js";
 import { AsideTransport } from "./runner.js";
 import type { AsideCommandRunner } from "./runner.js";
 import { deadlines, transportStatus } from "../playwright/worker-protocol.js";
-import { AsideSession } from "./session.js";
+import { AsideSession, asideChangeRead } from "./session.js";
 
 export type { AsideAdapterOptions } from "../browser-adapter.js";
 export type { AsideCommandRunner } from "./runner.js";
@@ -192,7 +192,7 @@ export class OwnedAsideAdapter extends AsideAdapter {
       try {
         while (!this.sealed) {
           const status = await this.jobs.waitForChange(jobId,
-            (tabId, expression) => reader.evaluate(tabId, expression, 95_000), 85_000);
+            (tabId, expression) => reader.evaluate(tabId, expression, asideChangeRead.rpcTimeoutMs), asideChangeRead.leaseMs);
           if (!pending(status)) break;
         }
       } catch (error) {

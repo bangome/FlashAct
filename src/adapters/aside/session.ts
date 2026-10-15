@@ -13,6 +13,9 @@ const replySchema = z.object({
   content: z.array(z.object({ type: z.literal("text"), text: z.string() })),
 });
 
+// Runtime.evaluate has a measured 30-second CDP deadline inside the REPL timeout.
+export const asideChangeRead = { leaseMs: 20_000, rpcTimeoutMs: 25_000 } as const;
+
 export type AsideSessionDependencies = {
   readonly transport?: () => StdioClientTransport;
 };

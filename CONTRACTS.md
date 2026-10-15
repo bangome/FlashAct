@@ -208,7 +208,8 @@ on Darwin/Linux. Endpoint ownership terminates the SDK client only; the browser,
 tabs and profile remain borrowed. Owned Aside uses persistent official MCP CLI
 sessions: one control session and an independent installation-bound event reader
 per pending job. Target inspection stays live and typed without repeated snapshots.
-Readers have an 85-second observation lease and a 95-second RPC deadline; initial
+Readers have a 20-second observation lease and a 25-second RPC deadline, below
+Aside's measured 30-second inner CDP evaluation limit; initial
 acquisition is bounded to 30 seconds and ordinary operations to five seconds.
 Loss never reconnects or retries. Owned Aside joins its actual CLI processes.
 Close/cancel can preempt a stuck status request, cancel future host callbacks,

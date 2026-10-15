@@ -97,6 +97,12 @@ For an Aside task choose `--backend aside --scheduling auto`: this uses browser
 timers/observers, not host-assisted wake. Explicit `--scheduling host` is
 unsupported for Aside.
 
+With `auto`, `status.execution.scheduler: "browser"` and reason
+`"unsupported-host-wake"` are expected for Aside; that reason is not an error
+or evidence that dispatch failed. Diagnose the lifecycle state separately.
+Status reads renew their 20-second observation lease before Aside's inner
+30-second CDP evaluation timeout; renewal never reinstalls or rearms a job.
+
 Owned FlashAct CLI/MCP reuses official Aside MCP control/read sessions.
 Foreground publishes runtime changes without a status-poll loop; a pending
 event read does not block cancel/control. Read leases renew observation only,

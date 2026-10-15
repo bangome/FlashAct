@@ -3,6 +3,7 @@ import { getEventListeners } from "node:events";
 import { describe, expect, it, vi } from "vitest";
 import { RuntimeJobs } from "../../src/adapters/playwright/runtime-jobs.js";
 import type { ExecutionPlan, JobStatus } from "../../src/core/types.js";
+import { asideChangeRead } from "../../src/adapters/aside/session.js";
 
 const plan: ExecutionPlan = {
   schemaVersion: "1.0", jobId: "read", name: "Change read", backend: "aside",
@@ -45,6 +46,30 @@ async function fixture() {
 }
 
 describe("installation-bound event reads", () => {
+  it("renews an Aside observation before the inner CDP evaluation deadline", async () => {
+    // Given: the real transport expires pending Runtime.evaluate after 30 seconds.
+    vi.useFakeTimers();
+    const f = await fixture();
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    const evaluate = async (tab: string, expression: string): Promise<unknown> => {
+      try {
+        return await Promise.race([f.evaluate(tab, expression), new Promise<never>((_resolve, reject) => {
+          timeout = setTimeout(() => reject(new Error("CDP command timeout: Runtime.evaluate")), 30000);
+        })]);
+      } finally { clearTimeout(timeout); }
+    };
+    try {
+      // When: no page change happens before the transport deadline.
+      const reading = f.jobs.waitForChange("read", evaluate, asideChangeRead.leaseMs);
+      await f.started;
+      await vi.advanceTimersByTimeAsync(30000);
+      // Then: renewal observes WAITING, not UNKNOWN, without rearming.
+      expect(await reading).toMatchObject({ state: "WAITING", executions: 0 });
+      expect(getEventListeners(f.document, "__flashact_status__")).toHaveLength(1);
+      expect(asideChangeRead.rpcTimeoutMs).toBeLessThan(30000);
+    } finally { await f.jobs.disconnect(); vi.useRealTimers(); }
+  });
+
   it("waits for changed evidence despite different JSON property order", async () => {
     // Given
     const f = await fixture();
