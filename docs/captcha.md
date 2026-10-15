@@ -20,6 +20,7 @@ Configure exact, unique CSS selectors on the approved target document:
 
 | Plan field | CLI flag | Requirement/default |
 | --- | --- | --- |
+| `screenSelector` | `--captcha-screen` | Required active CAPTCHA-specific screen/container |
 | `imageSelector` | `--captcha-image` | Required text-image element |
 | `inputSelector` | `--captcha-input` | Required empty input |
 | `submitSelector` | `--captcha-submit` | Optional explicit submit action |
@@ -30,11 +31,20 @@ Configure exact, unique CSS selectors on the approved target document:
 | `timeoutMs` | `--captcha-timeout-ms` | Integer 100..120000, default 15000 |
 
 The CLI rejects partial configurations and dangling options, including tuning
-flags without both required selectors and submission without a success selector.
+flags without all three required selectors and submission without a success selector.
 Without `submitSelector`, the operation fills once and does not submit.
 Only supply submit when that exact action is explicitly intended and an
 observable success selector is available. An already-present receipt is not
 new success evidence.
+
+Identify the CAPTCHA screen from actual page inspection, not from the fact that
+a click occurred or an image/input pair exists. The required `screenSelector`
+must match a unique visible/enabled CAPTCHA-specific container containing the
+configured image, input and optional submit. Whole-document body/html selections
+reject. If a reliable screen marker is unavailable, inspect/classify the page
+before arming; this is not a general visual semantic classifier. Previously
+configured CAPTCHA plans must add this field; there is no guessed fallback.
+Losing/replacing the bound screen during recognition prevents input.
 
 For an already inspected and approved tab, using its exact tab ID and URL:
 
@@ -43,19 +53,21 @@ For an already inspected and approved tab, using its exact tab ID and URL:
 ```sh
 fa --watch --backend "$BACKEND" --tab "$TAB_ID" \
   --url "$URL" --approved-url "$URL" --action captcha --when appear \
+  --captcha-screen '#captcha-dialog' \
   --captcha-image '#captcha-image' --captcha-input '#captcha-answer'
 ```
 
 Arm this before the challenge is expected. OCR compiles/warms during preparation,
 then the owned process stays alive. The image may initially be missing or hidden;
-FlashAct waits for visibility and actual image load, captures pixels, recognizes
+FlashAct waits for the confirmed CAPTCHA screen, contained fields and image load, captures pixels, recognizes
 and fills once without another agent round trip. An already-visible image can
 be processed immediately. `--selector` defaults to `--captcha-image`; an explicit
 different selector rejects. No opener, reserve button or image is clicked.
 
-Before image dispatch, waiting is bounded by plan expiry (the reactive CLI
-default is 24 hours). After dispatch, `captcha.timeoutMs` bounds image readiness,
-recognition, input and optional verification, also capped by plan expiry.
+Waiting for the confirmed screen and ready fields is bounded by plan expiry
+(the reactive CLI default is 24 hours) and any stricter primary verification.
+Only after screen confirmation and image/input readiness does `captcha.timeoutMs`
+bound recognition, input and optional verification, also capped by plan expiry.
 Cancel when the authorized waiting window ends; no retry or rearm is automatic.
 
 ### Click, then recognize an image
@@ -64,6 +76,7 @@ Cancel when the authorized waiting window ends; no retry or rearm is automatic.
 fa --watch --backend "$BACKEND" --tab "$TAB_ID" \
   --url "$URL" --approved-url "$URL" --selector '#reserve' \
   --action click --when enabled \
+  --captcha-screen '#captcha-dialog' \
   --captcha-image '#captcha-image' --captcha-input '#captcha-answer' \
   --captcha-length 6 --captcha-alphabet uppercase-alphanumeric \
   --captcha-min-confidence 0.8 --captcha-timeout-ms 15000
@@ -82,6 +95,8 @@ verification selector, its normal default remains 5000 ms.
 Appearance detection is installed before arming and activated only after the
 chosen action has `executions: 1`. On click plans that means the original click;
 on CAPTCHA-only plans it means a workflow dispatch marker, not a DOM click.
+Dispatch alone is never CAPTCHA evidence: screen confirmation gates pixel capture
+and recognition even if ordinary images and inputs are already visible.
 CAPTCHA-only readiness uses DOM/resize/load/animation events and scheduled/expiry
 deadlines, without a recurring readiness timer or agent polling the page.
 Capture uses cropped image pixels, not DOM text.
@@ -101,7 +116,7 @@ retain its changes independently of the original click lifecycle:
 | `captcha.state` | Meaning |
 | --- | --- |
 | `PREPARING` | Local OCR preparation |
-| `WAITING` | Waiting for the eligible challenge |
+| `WAITING` | Waiting for the confirmed CAPTCHA screen and ready contained fields |
 | `CAPTURING` | Cropped pixel capture |
 | `RECOGNIZING` | Local OCR |
 | `FILLED` | One input completed; not submission or success |
@@ -171,6 +186,7 @@ optional field inside the full plan to existing `flashact_create_job`:
 ```json
 {
   "captcha": {
+    "screenSelector": "#captcha-dialog",
     "imageSelector": "#captcha-image",
     "inputSelector": "#captcha-answer",
     "submitSelector": "#captcha-submit",

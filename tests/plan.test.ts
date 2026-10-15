@@ -55,18 +55,35 @@ describe("execution plan boundary", () => {
     const input = { ...plan, action: { type: "captcha" },
       target: { ...plan.target, selector: "#image" },
       trigger: { type: "ELEMENT_APPEAR", selector: "#image" },
-      captcha: { imageSelector: "#image", inputSelector: "#answer" } };
+      captcha: { screenSelector: "#challenge", imageSelector: "#image", inputSelector: "#answer" } };
     // When
     const result = parsePlan(input);
     // Then
     expect(result).toMatchObject({ action: { type: "captcha" }, maxExecutions: 1,
-      captcha: { imageSelector: "#image", inputSelector: "#answer", length: 6 } });
+      captcha: { screenSelector: "#challenge", imageSelector: "#image", inputSelector: "#answer", length: 6 } });
   });
 
   it("rejects a captcha-only workflow targeting a different element", () => {
     // Given
     const input = { ...plan, action: { type: "captcha" },
-      captcha: { imageSelector: "#image", inputSelector: "#answer" } };
+      captcha: { screenSelector: "#challenge", imageSelector: "#image", inputSelector: "#answer" } };
+    // When
+    const result = planSchema.safeParse(input);
+    // Then
+    expect(result.success).toBe(false);
+  });
+
+  it.each([
+    { imageSelector: "#image", inputSelector: "#answer" },
+    { screenSelector: "#challenge" },
+    { screenSelector: "#challenge", imageSelector: "#image" },
+    { screenSelector: "#challenge", inputSelector: "#answer" },
+    ...[undefined, null, "", " ", 42, "#".repeat(1025)].map(screenSelector => ({
+      screenSelector, imageSelector: "#image", inputSelector: "#answer",
+    })),
+  ])("rejects incomplete or invalid CAPTCHA boundaries %j", captcha => {
+    // Given
+    const input = { ...plan, captcha };
     // When
     const result = planSchema.safeParse(input);
     // Then

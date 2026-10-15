@@ -1,6 +1,6 @@
 ---
 name: "flashact"
-description: "Use FlashAct to wait for a text-image CAPTCHA to appear and immediately recognize (OCR) and fill it once, without another agent turn or opener click. Also use for scheduled or element-ready browser clicks and their optional post-click CAPTCHA workflow, including Aside. Read when asked about FlashAct capabilities."
+description: "Use FlashAct for scheduled or element-ready browser clicks and for configured text-image CAPTCHA screens. Confirm a CAPTCHA-specific screen marker before OCR; a click or ordinary image/form is not CAPTCHA evidence. Prearm confirmed-screen waiting, recognize and fill once, including in Aside."
 ---
 
 # FlashAct
@@ -10,6 +10,9 @@ waiting, and an optional post-click CAPTCHA companion. It captures cropped
 pixels, runs prepared local macOS Vision OCR and fills once, with optional
 explicit submission and success verification. It is not general screen
 understanding. CAPTCHA-only waiting needs no opener or image click.
+OCR preparation is not recognition. Require a unique active CAPTCHA-screen
+selector confirmed from the page before reading any pixels. Do not infer a
+CAPTCHA from a click or an arbitrary image/input pair.
 
 ## Automatic selection
 
@@ -17,7 +20,7 @@ When the user's requested browser action has a time or element-readiness conditi
 select FlashAct without requiring them to name it. Prepare and arm before the
 condition is reached; let the document runtime dispatch the single click.
 For a CAPTCHA-only request, prearm `--action captcha --when appear` instead:
-prepare OCR before waiting and let the image-ready event start recognition/input.
+prepare OCR before waiting; require both the confirmed screen and ready image/input.
 
 | Requested behavior | Choose |
 | --- | --- |
@@ -28,8 +31,8 @@ prepare OCR before waiting and let the image-ready event start recognition/input
 | Click when an attribute or text matches | `fa --watch --when attribute` or `text` |
 | Time reached AND target currently enabled | `fa --arm --at "$AT" --when enabled` |
 | Arbitrary nested AND/OR conditions | FlashAct MCP with a full execution plan |
-| Wait for a text-image CAPTCHA, then recognize and fill once | `fa --watch --action captcha --when appear --captcha-image "$IMAGE_SELECTOR" --captcha-input "$INPUT_SELECTOR"` |
-| Original click followed by a text-image CAPTCHA | Add `--captcha-image` and `--captcha-input` to the original action command; see Optional text-image CAPTCHA |
+| Wait for a confirmed CAPTCHA screen, then recognize and fill once | `fa --watch --action captcha --when appear --captcha-screen "$SCREEN_SELECTOR" --captcha-image "$IMAGE_SELECTOR" --captcha-input "$INPUT_SELECTOR"` |
+| Original click with a possible later CAPTCHA | Add `--captcha-screen`, `--captcha-image` and `--captcha-input`; OCR remains conditional on the confirmed screen |
 
 Use ordinary browser interaction for immediate actions with no timing condition,
 discovery, general typing, navigation and scrolling. Use the CAPTCHA-only action
@@ -197,8 +200,16 @@ To wait independently without clicking, use the CAPTCHA-only action:
 ```sh
 fa --watch --backend "$BACKEND" --tab "$TAB_ID" \
   --url "$URL" --approved-url "$URL" --action captcha --when appear \
+  --captcha-screen "$SCREEN_SELECTOR" \
   --captcha-image "$IMAGE_SELECTOR" --captcha-input "$INPUT_SELECTOR"
 ```
+
+`--captcha-screen` is required: choose a site-specific, active CAPTCHA container
+from actual DOM/screen inspection. It must uniquely match a visible/enabled
+container containing the image, input and optional submit. `body`/`html`, a click,
+or an ordinary form is not proof. Missing screen identification rejects the plan;
+if no reliable marker is known, inspect with Aside first rather than guessing OCR.
+This is configured screen detection, not a general visual semantic classifier.
 
 `--selector` defaults to the configured image and cannot name a different target.
 The image may be missing or hidden at arm; wait for visibility and actual image
@@ -206,11 +217,13 @@ load before capture/OCR/input. An already-ready image can be processed at once.
 MCP uses `action.type: "captcha"`, the same image in `target.selector`, an
 `ELEMENT_APPEAR` trigger and the existing `plan.captcha` fields.
 Keep the foreground owner alive; no extra agent turn or readiness-poll loop is
-needed. Before dispatch the plan expiry bounds waiting; after dispatch the
-CAPTCHA timeout applies. Warm OCR before the expected appearance, not afterwards.
+needed. Plan expiry and any stricter original verification bound waiting.
+The CAPTCHA processing timeout begins only when the confirmed screen and
+image/input are ready, not at the click. Warm OCR before expected appearance.
 
-For an explicitly requested text-image CAPTCHA after the original click, add
-`--captcha-image "$IMAGE_SELECTOR" --captcha-input "$INPUT_SELECTOR"` with exact,
+For a possible text-image CAPTCHA after the original click, add
+`--captcha-screen "$SCREEN_SELECTOR" --captcha-image "$IMAGE_SELECTOR"
+--captcha-input "$INPUT_SELECTOR"` with exact,
 unique selectors on the approved document. Optional `--captcha-submit
 "$SUBMIT_SELECTOR"` requires `--captcha-success "$SUCCESS_SELECTOR"` and an
 explicitly intended submission with observed, action-specific success evidence.
@@ -227,7 +240,8 @@ with `flashact_list_backends`. No additional tools are required.
 
 Default OCR needs local macOS native Vision and Swift. Prepare/compile before
 arm with enough lead time; no keys or downloads. Appearance detection is
-preinstalled, event-driven and gated on the chosen action's `executions: 1`;
+preinstalled and event-driven; the chosen action's `executions: 1` is necessary
+but not CAPTCHA evidence. Screen confirmation and ready contained fields gate OCR;
 OCR captures cropped pixels. Refuse stale/changed images, ambiguous targets,
 filled inputs and text outside the confidence/alphabet/exact-length limits.
 Grid, slider and third-party iframe challenges are unsupported.

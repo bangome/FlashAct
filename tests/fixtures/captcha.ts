@@ -6,7 +6,10 @@ import type { JobEngine } from "../../src/core/engine.js";
 import { parsePlan } from "../../src/core/schema.js";
 
 /** Authored challenge: the answer is checked independently by the HTTP service. */
-export async function captchaFixture(options: { readonly externalAppearance?: boolean } = {}) {
+export async function captchaFixture(options: {
+  readonly externalAppearance?: boolean;
+  readonly ordinaryBeforeCaptcha?: boolean;
+} = {}) {
   const answer = "K7M2X9";
   const attempts: string[] = [];
   const receipts: { clicks: number; imageClicks: number; inputs: number; appearanceToInputMs: number }[] = [];
@@ -55,10 +58,18 @@ export async function captchaFixture(options: { readonly externalAppearance?: bo
       window.drawChallenge=function(text){const ctx=canvas.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,240,80);
       ctx.fillStyle='#111';ctx.font='bold 40px monospace';ctx.textBaseline='middle';ctx.fillText(text,15,42);};
       drawChallenge(${JSON.stringify(answer)});
-      window.showChallenge=()=>{window.challengeShownAt=performance.now();document.querySelector('#challenge').hidden=false;};
+      ${options.ordinaryBeforeCaptcha ? `const ordinary=document.createElement('section');ordinary.id='ordinary-form';
+      ordinary.append(canvas,document.querySelector('#answer').closest('label'),document.querySelector('#submit'));
+      document.querySelector('main').append(ordinary);` : ""}
+      window.showChallenge=()=>{
+        ${options.ordinaryBeforeCaptcha ? `document.querySelector('#challenge').append(...ordinary.children);ordinary.remove();` : ""}
+        window.challengeShownAt=performance.now();document.querySelector('#challenge').hidden=false;
+      };
       canvas.addEventListener('click',()=>{window.imageClicks++;});
       document.querySelector('#answer').addEventListener('input',()=>{window.inputs++;window.challengeInputAt=performance.now();});
-      document.querySelector('#reserve').addEventListener('click',()=>{window.clicks++;showChallenge();});
+      document.querySelector('#reserve').addEventListener('click',()=>{
+        window.clicks++;${options.ordinaryBeforeCaptcha ? "" : "showChallenge();"}
+      });
       ${options.externalAppearance ? `const appearances=new EventSource(${JSON.stringify(`${path}/appearance`)});
       appearances.addEventListener('message',()=>showChallenge());` : ""}
       document.querySelector('#submit').addEventListener('click',async()=>{
@@ -95,7 +106,8 @@ export function captchaPlan(tabId: string, url: string): ExecutionPlan {
     target: { tabId, selector: "#reserve", url }, trigger: { type: "ELEMENT_ENABLE", selector: "#reserve" },
     action: { type: "click" }, timezone: "UTC", expiresAt: Date.now() + 60000, maxExecutions: 1,
     verification: { timeoutMs: 5000 }, guards: { approvedUrl: url, allowIrreversible: false },
-    captcha: { imageSelector: "#image", inputSelector: "#answer", submitSelector: "#submit", successSelector: "#success" },
+    captcha: { screenSelector: "#challenge", imageSelector: "#image", inputSelector: "#answer",
+      submitSelector: "#submit", successSelector: "#success" },
   });
 }
 

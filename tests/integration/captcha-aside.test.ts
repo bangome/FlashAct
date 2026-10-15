@@ -7,9 +7,13 @@ import { parsePlan } from "../../src/core/schema.js";
 import { captchaFixture, captchaOutcome, captchaPlan } from "../fixtures/captcha.js";
 
 describe.runIf(process.env["FLASHACT_ASIDE_INTEGRATION"] === "1")("owned Aside captcha", () => {
-  it.each(["click", "captcha"])("recognizes an authored challenge after %s and joins its owners", async action => {
+  it.each(["click", "captcha"].flatMap(action =>
+    [false, true].map(ordinaryBeforeCaptcha => ({ action, ordinaryBeforeCaptcha }))))(
+    "recognizes a confirmed screen after $action with ordinaryBeforeCaptcha=$ordinaryBeforeCaptcha",
+    async ({ action, ordinaryBeforeCaptcha }) => {
     // Given
-    const fixture = await captchaFixture({ externalAppearance: action === "captcha" });
+    const externalAppearance = ordinaryBeforeCaptcha || action === "captcha";
+    const fixture = await captchaFixture({ externalAppearance, ordinaryBeforeCaptcha });
     const owner = new AsideSession();
     const engine = new JobEngine({ adapterMode: "owned" });
     const marker = `__CAPTCHA_${randomUUID()}__`;
@@ -28,13 +32,16 @@ describe.runIf(process.env["FLASHACT_ASIDE_INTEGRATION"] === "1")("owned Aside c
           trigger: { type: "ELEMENT_APPEAR", selector: "#image" } } : {}) });
       // When
       await engine.createJob(plan); await engine.validateJob(plan.jobId); await engine.armJob(plan.jobId);
-      if (action === "captcha") {
+      if (externalAppearance) {
         expect((await engine.getStatus(plan.jobId)).captcha?.state).toBe("WAITING");
+        expect(engine.logs().some(status =>
+          status.captcha?.state === "CAPTURING" || status.captcha?.state === "RECOGNIZING")).toBe(false);
+        expect(fixture.attempts).toEqual([]);
         await fixture.reveal();
       }
       const result = await outcome.result;
       // Then
-      console.log(JSON.stringify({ captchaAcceptance: "aside", action, state: result.captcha,
+      console.log(JSON.stringify({ captchaAcceptance: "aside", action, ordinaryBeforeCaptcha, state: result.captcha,
         effects: fixture.attempts.length, receipts: fixture.receipts }));
       expect(result).toMatchObject({ executions: 1, captcha: { state: "VERIFIED", inputs: 1, submissions: 1 } });
       expect(fixture.attempts).toEqual([fixture.answer]);

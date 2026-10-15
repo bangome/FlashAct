@@ -46,7 +46,7 @@ const planOptionsSchema = connectionSchema.safeExtend({
   attribute: z.string().optional(), value: z.string().optional(), timezone: z.string().default('UTC'),
   verifySelector: z.string().min(1).optional(),
   verifyTimeoutMs: z.coerce.number().int().positive().max(Number.MAX_SAFE_INTEGER).optional(),
-  captchaImage: z.string().optional(), captchaInput: z.string().optional(),
+  captchaScreen: z.string().optional(), captchaImage: z.string().optional(), captchaInput: z.string().optional(),
   captchaSubmit: z.string().optional(), captchaSuccess: z.string().optional(),
   captchaLength: z.coerce.number().optional(), captchaAlphabet: z.string().optional(),
   captchaMinConfidence: z.coerce.number().optional(), captchaTimeoutMs: z.coerce.number().optional(),
@@ -55,6 +55,7 @@ const planOptionsSchema = connectionSchema.safeExtend({
 export async function commandPlan(engine: JobEngine, input: unknown) {
   const options = planOptionsSchema.parse(input);
   const captchaInput = {
+    screenSelector: options.captchaScreen,
     imageSelector: options.captchaImage, inputSelector: options.captchaInput,
     submitSelector: options.captchaSubmit, successSelector: options.captchaSuccess,
     length: options.captchaLength, alphabet: options.captchaAlphabet,
@@ -73,7 +74,7 @@ export async function commandPlan(engine: JobEngine, input: unknown) {
   switch (options.action) {
     case 'click': break;
     case 'captcha':
-      if (!captcha) throw new FlashActError('INVALID_PLAN', '--action captcha requires --captcha-image and --captcha-input');
+      if (!captcha) throw new FlashActError('INVALID_PLAN', '--action captcha requires --captcha-screen, --captcha-image and --captcha-input');
       selector ??= captcha.imageSelector;
       if (selector !== captcha.imageSelector)
         throw new FlashActError('INVALID_PLAN', '--action captcha requires the target selector to equal --captcha-image');

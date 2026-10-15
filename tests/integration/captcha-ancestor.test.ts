@@ -35,7 +35,7 @@ describe("CAPTCHA ancestor readiness", { timeout: 30000 }, () => {
           const plan = parsePlan({ ...base, action: { type: "captcha" },
             target: { ...base.target, selector: "#image" },
             trigger: { type: "ELEMENT_APPEAR", selector: "#image" },
-            captcha: { imageSelector: "#image", inputSelector: "#answer" } });
+            captcha: { screenSelector: "#challenge", imageSelector: "#image", inputSelector: "#answer" } });
           await engine.createJob(plan); await engine.validateJob(plan.jobId); await engine.armJob(plan.jobId);
           // Drain initial resize delivery before the visibility-only mutation.
           await page.locator("#image").evaluate(node => new Promise<void>(resolve => {

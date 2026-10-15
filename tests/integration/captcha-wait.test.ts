@@ -185,6 +185,7 @@ describe("primary CAPTCHA appearance workflow", { timeout: 30000 }, () => {
       await bounded(load.promise, "PNG load");
       const result = await filled();
       if (reload) {
+        expect(f.counts().recognitions).toBe(1);
         expect(result.captcha).toMatchObject({ state: "FAILED", error: "CHALLENGE_CHANGED", inputs: 0, submissions: 0 });
         expect(await f.page.inputValue("#answer")).toBe("");
         expect(f.fixture.attempts).toEqual([]);

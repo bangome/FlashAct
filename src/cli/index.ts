@@ -49,14 +49,15 @@ export function createCli(): Command {
       .option('--scheduling <auto|browser|host>', 'scheduling policy (transport always owned)', 'auto')
       .option('--verify-selector <css>', 'verification CSS selector; omitted means local-click-only verification')
       .option('--verify-timeout-ms <integer>', 'positive safe-integer verification timeout; default 5000, or captcha timeout + 2000 with a verification selector')
-      .option('--captcha-image <css>', 'unique text-image CAPTCHA selector')
+      .option('--captcha-screen <css>', 'required agent-confirmed CAPTCHA-specific visible container selector')
+      .option('--captcha-image <css>', 'unique text-image CAPTCHA selector inside --captcha-screen')
       .option('--captcha-input <css>', 'unique empty CAPTCHA input selector')
       .option('--captcha-submit <css>', 'explicit optional CAPTCHA submit selector; requires --captcha-success')
       .option('--captcha-success <css>', 'observed CAPTCHA success selector')
       .option('--captcha-length <integer>', 'expected text length, 1..32 (default 6)')
       .option('--captcha-alphabet <alphabet>', 'uppercase-alphanumeric, alphanumeric, or digits (default uppercase-alphanumeric)')
       .option('--captcha-min-confidence <number>', 'minimum OCR confidence, 0..1 (default 0.8)')
-      .option('--captcha-timeout-ms <integer>', 'CAPTCHA timeout, 100..120000 milliseconds (default 15000)')
+      .option('--captcha-timeout-ms <integer>', 'processing timeout after confirmed screen readiness, 100..120000 milliseconds (default 15000)')
       .option('--foreground', 'stay alive (always enabled; no daemon mode)');
     if (name !== 'watch') command.requiredOption('--at <time>', 'HH:mm:ss.SSS or offset ISO');
     if (name !== 'schedule') command.requiredOption('--when <condition>', 'enabled/appear/visible/attribute/text or #selector:enabled');

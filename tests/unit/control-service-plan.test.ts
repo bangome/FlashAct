@@ -102,9 +102,10 @@ describe('service capabilities and lifetime', () => {
         provider: 'macos-vision', requiresSwift: true, textImageOnly: true,
         prepareBeforeArm: true, maxInputs: 1, maxSubmissions: 1,
         planSchema: {
-          required: ['imageSelector', 'inputSelector'],
+          required: ['screenSelector', 'imageSelector', 'inputSelector'],
           dependentRequired: { submitSelector: ['successSelector'] },
           properties: {
+            screenSelector: { type: 'string', minLength: 1, maxLength: 1024, pattern: '\\S' },
             length: { default: 6, minimum: 1, maximum: 32 },
             timeoutMs: { default: 15000, minimum: 100, maximum: 120000 },
           },

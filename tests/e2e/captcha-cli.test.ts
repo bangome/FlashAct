@@ -7,14 +7,18 @@ import { captchaFixture } from "../fixtures/captcha.js";
 import { bounded, serviceChild } from "../fixtures/control-service.js";
 
 describe.runIf(process.platform === "darwin")("compiled captcha CLI", () => {
-  it.each(["click", "captcha"])("publishes native OCR after %s and joins browser/OCR on shutdown", async action => {
+  it.each(["click", "captcha"].flatMap(action =>
+    [false, true].map(ordinaryBeforeCaptcha => ({ action, ordinaryBeforeCaptcha }))))(
+    "publishes native OCR after $action with ordinaryBeforeCaptcha=$ordinaryBeforeCaptcha and joins browser/OCR on shutdown",
+    async ({ action, ordinaryBeforeCaptcha }) => {
     // Given
-    const fixture = await captchaFixture({ externalAppearance: action === "captcha" });
+    const externalAppearance = ordinaryBeforeCaptcha || action === "captcha";
+    const fixture = await captchaFixture({ externalAppearance, ordinaryBeforeCaptcha });
     const home = await mkdtemp(join(tmpdir(), "flashact-captcha-cli-"));
     const service = serviceChild(["--watch", "--launch", "--headless", "--url", fixture.url,
       "--approved-url", fixture.url, "--action", action,
       ...(action === "click" ? ["--selector", "#reserve", "--when", "enabled"] : ["--when", "appear"]),
-      "--captcha-image", "#image", "--captcha-input", "#answer", "--captcha-submit", "#submit",
+      "--captcha-screen", "#challenge", "--captcha-image", "#image", "--captcha-input", "#answer", "--captcha-submit", "#submit",
       "--captcha-success", "#success", "--verify-selector", "#success"], home);
     let buffer = "";
     let finish = () => {};
@@ -34,9 +38,14 @@ describe.runIf(process.platform === "darwin")("compiled captcha CLI", () => {
     void service.exited.then(() => fail(new Error(`CLI exited before captcha: ${service.output().stderr}`)));
     try {
       // When
-      if (action === "captcha") {
-        await service.waitForState("WAITING");
-        expect(service.messages.some(value => jobStatusSchema.parse(value).captcha?.state === "RECOGNIZING")).toBe(false);
+      if (externalAppearance) {
+        await service.waitForState(ordinaryBeforeCaptcha ? "DISPATCHED" : "WAITING");
+        expect(service.messages.some(value => {
+          const state = jobStatusSchema.parse(value).captcha?.state;
+          return state === "CAPTURING" || state === "RECOGNIZING";
+        })).toBe(false);
+        expect(fixture.attempts).toEqual([]);
+        expect(fixture.receipts).toEqual([]);
         await bounded(fixture.reveal(), "challenge appearance connection");
       }
       await bounded(completed, "native captcha CLI verification");
@@ -53,7 +62,7 @@ describe.runIf(process.platform === "darwin")("compiled captcha CLI", () => {
       if (action === "captcha") expect(result?.timing?.clickEpochMs).toBeUndefined();
       expect(service.output().stderr).toBe("");
       await expect(access(join(home, "engine.json"))).rejects.toMatchObject({ code: "ENOENT" });
-      console.log(JSON.stringify({ captchaAcceptance: "cli", action, captcha: result?.captcha,
+      console.log(JSON.stringify({ captchaAcceptance: "cli", action, ordinaryBeforeCaptcha, captcha: result?.captcha,
         effects: fixture.attempts.length, receipts: fixture.receipts }));
     } finally {
       service.child.stdout.off("data", status);

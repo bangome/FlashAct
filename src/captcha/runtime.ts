@@ -20,12 +20,20 @@ function install(key: string, plan: ExecutionPlan, makeDom: typeof createDom): b
   const dom = makeDom();
   const originalTarget = dom.select(plan.target.selector)[0];
   const documentAtInstall = document;
+  let challengeScreen: Element | undefined;
   let image: Element | undefined;
   let input: HTMLInputElement | undefined;
   let submit: HTMLElement | undefined;
   let source = "";
   let imageVersion = 0;
   let readyLoadEvent: Event | undefined;
+  const initialLoads = new WeakSet<HTMLImageElement>();
+  const loaded = (event: Event) => {
+    if (event.target instanceof HTMLImageElement && initialLoads.has(event.target)) {
+      if (event.target === image) readyLoadEvent = event;
+      initialLoads.delete(event.target);
+    }
+  };
   const imageLoaded = (event: Event) => { if (event !== readyLoadEvent) imageVersion++; };
   let inputs = 0;
   let submissions = 0;
@@ -66,7 +74,11 @@ function install(key: string, plan: ExecutionPlan, makeDom: typeof createDom): b
     const original = globalThis.__flashactRuntime?.status(plan.jobId);
     if (original === undefined || original.executions !== 1
       || (original.state !== "DISPATCHED" && original.state !== "VERIFIED")) return false;
-    for (const [selector, cached] of [[config.imageSelector, image], [config.inputSelector, input],
+    if (!challengeScreen || !image || !input || !dom.visible(challengeScreen) || !dom.enabled(challengeScreen)
+      || !challengeScreen.contains(image) || !challengeScreen.contains(input)
+      || (submit && !challengeScreen.contains(submit))) return false;
+    for (const [selector, cached] of [[config.screenSelector, challengeScreen],
+      [config.imageSelector, image], [config.inputSelector, input],
       [config.submitSelector, submit]] as const) {
       if (selector && cached) {
         const current = dom.select(selector);
@@ -79,18 +91,28 @@ function install(key: string, plan: ExecutionPlan, makeDom: typeof createDom): b
     if (cancelled) return view("cancelled");
     if (unknown) return view("unknown");
     if (document !== documentAtInstall || location.href !== plan.guards.approvedUrl) return view("invalid");
+    if (!image) {
+      const pendingImage = dom.select(config.imageSelector)[0];
+      if (pendingImage instanceof HTMLImageElement && !pendingImage.complete) initialLoads.add(pendingImage);
+    }
     const original = globalThis.__flashactRuntime?.status(plan.jobId);
     if (!original) return view("invalid");
     if (["CANCELLED", "UNKNOWN", "FAILED", "INVALIDATED", "EXPIRED"].includes(original.state)) return view("invalid");
     if (original.executions === 0) return view("waiting");
-    deadline ??= Math.min(plan.expiresAt, Date.now() + config.timeoutMs);
     if (inputs > 0 && config.successSelector) {
       const successes = dom.select(config.successSelector);
       if (successes.length === 1 && successes[0] && dom.visible(successes[0])) return view("verified");
     }
     if (inputs > 0 && !config.successSelector) return view("filled");
-    if (Date.now() >= deadline) return view("timeout");
+    if (Date.now() >= (deadline ?? plan.expiresAt)) return view("timeout");
     if (inputs > 0) return view(submissions ? "submitted" : "filled");
+    const screens = dom.select(config.screenSelector);
+    if (screens.length > 1) return view("invalid");
+    const nextScreen = screens[0];
+    if (challengeScreen && challengeScreen !== nextScreen) return view("invalid");
+    if (!nextScreen || !dom.visible(nextScreen) || !dom.enabled(nextScreen))
+      return view(challengeScreen ? "invalid" : "waiting");
+    if (nextScreen === document.body || nextScreen === document.documentElement) return view("invalid");
     const images = dom.select(config.imageSelector);
     const fields = dom.select(config.inputSelector);
     if (images.length > 1 || fields.length > 1) return view("invalid");
@@ -99,6 +121,7 @@ function install(key: string, plan: ExecutionPlan, makeDom: typeof createDom): b
     if ((image && image !== nextImage) || (input && input !== nextInput)) return view("invalid");
     if (!nextImage || !nextInput || !dom.visible(nextImage) || !dom.visible(nextInput)
       || !dom.enabled(nextInput)) return view("waiting");
+    if (!nextScreen.contains(nextImage) || !nextScreen.contains(nextInput)) return view(challengeScreen ? "invalid" : "waiting");
     if (!(nextInput instanceof HTMLInputElement) || !["text", "search", "tel"].includes(nextInput.type)
       || nextInput.readOnly || nextInput.value !== "") return view("invalid");
     if (nextImage instanceof HTMLImageElement && (!nextImage.complete || nextImage.naturalWidth === 0)) return view("waiting");
@@ -109,6 +132,7 @@ function install(key: string, plan: ExecutionPlan, makeDom: typeof createDom): b
     if (submit && submit !== nextSubmit) return view("invalid");
     if (config.submitSelector && (!(nextSubmit instanceof HTMLElement) || !dom.visible(nextSubmit)
       || !dom.enabled(nextSubmit))) return view("waiting");
+    if (nextSubmit && !nextScreen.contains(nextSubmit)) return view(challengeScreen ? "invalid" : "waiting");
     if (nextSubmit && !plan.guards.allowIrreversible && dom.irreversible(nextSubmit)) return view("invalid");
     if (config.successSelector && dom.select(config.successSelector).length > 0) return view("invalid");
     const box = nextImage.getBoundingClientRect();
@@ -123,9 +147,10 @@ function install(key: string, plan: ExecutionPlan, makeDom: typeof createDom): b
       readyLoadEvent = event?.type === "load" && event.target === nextImage ? event : undefined;
       nextImage.addEventListener("load", imageLoaded);
     }
-    image = nextImage; input = nextInput;
+    challengeScreen = nextScreen; image = nextImage; input = nextInput;
     if (nextSubmit instanceof HTMLElement) submit = nextSubmit;
     source = currentSource; readyRegion = region;
+    deadline ??= Math.min(plan.expiresAt, Date.now() + config.timeoutMs);
     return view("ready", region);
   }
   function fill(text: string): View {
@@ -190,12 +215,14 @@ function install(key: string, plan: ExecutionPlan, makeDom: typeof createDom): b
     fill,
     cancel: () => {
       cancelled = true;
+      document.removeEventListener("load", loaded, true);
       image?.removeEventListener("load", imageLoaded);
       for (const check of [...readers]) check();
       registry.delete(key);
       return view(inputs || submissions ? "unknown" : "cancelled");
     },
   };
+  document.addEventListener("load", loaded, true);
   registry.set(key, bridge);
   return true;
 }

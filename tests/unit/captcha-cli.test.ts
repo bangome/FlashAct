@@ -13,7 +13,7 @@ vi.mock('../../src/cli/ipc.js', () => ({
 
 const input = { backend: 'playwright', tab: 'approved-tab', url: 'https://example.test/',
   approvedUrl: 'https://example.test/', selector: '#reserve', action: 'click', when: 'enabled' };
-const captcha = { captchaImage: '#image', captchaInput: '#answer' };
+const captcha = { captchaScreen: '#challenge', captchaImage: '#image', captchaInput: '#answer' };
 let engine: JobEngine;
 beforeEach(() => { engine = new JobEngine(); });
 afterEach(async () => { vi.restoreAllMocks(); await engine.close(); });
@@ -41,7 +41,7 @@ describe('CAPTCHA CLI plan boundary', () => {
     // When
     await program.parseAsync([name, '--tab', input.tab, '--approved-url', input.approvedUrl,
       '--action', action, ...(action === 'click' ? ['--selector', '#reserve'] : []), ...timing,
-      '--verify-selector', '#receipt', '--captcha-image', '#image', '--captcha-input', '#answer',
+      '--verify-selector', '#receipt', '--captcha-screen', '#challenge', '--captcha-image', '#image', '--captcha-input', '#answer',
       '--captcha-submit', '#submit', '--captcha-success', '#success', '--captcha-length', '4',
       '--captcha-alphabet', 'digits', '--captcha-min-confidence', '0.93', '--captcha-timeout-ms', '22000'],
     { from: 'user' });
@@ -49,7 +49,7 @@ describe('CAPTCHA CLI plan boundary', () => {
     // Then
     expect(plan.action.type).toBe(action);
     expect(plan.target.selector).toBe(action === 'click' ? '#reserve' : '#image');
-    expect(plan.captcha).toEqual({ imageSelector: '#image', inputSelector: '#answer',
+    expect(plan.captcha).toEqual({ screenSelector: '#challenge', imageSelector: '#image', inputSelector: '#answer',
       submitSelector: '#submit', successSelector: '#success', length: 4, alphabet: 'digits',
       minConfidence: 0.93, timeoutMs: 22000 });
     expect(plan.verification).toEqual({ selector: '#receipt', timeoutMs: 24000 });
@@ -76,6 +76,8 @@ describe('CAPTCHA CLI plan boundary', () => {
     { ...captcha, selector: '#reserve' },
     { ...captcha, selector: undefined, when: '#reserve:appear' },
     { captchaImage: '#image', selector: undefined },
+    { captchaImage: '#image', captchaInput: '#answer', selector: undefined },
+    { ...captcha, captchaScreen: '', selector: undefined },
     { ...captcha, selector: undefined, captchaSubmit: '#submit' },
     { ...captcha, selector: undefined, verifySelector: '#receipt', verifyTimeoutMs: '14999' },
   ])('rejects invalid standalone CAPTCHA before tab acquisition: %j', async options => {
@@ -90,12 +92,18 @@ describe('CAPTCHA CLI plan boundary', () => {
     // Given / When
     const plan = await commandPlan(engine, { ...input, ...captcha, verifySelector: '#receipt' });
     // Then
-    expect(plan.captcha).toEqual({ imageSelector: '#image', inputSelector: '#answer',
+    expect(plan.captcha).toEqual({ screenSelector: '#challenge', imageSelector: '#image', inputSelector: '#answer',
       alphabet: 'uppercase-alphanumeric', length: 6, minConfidence: 0.8, timeoutMs: 15000 });
     expect(plan.verification.timeoutMs).toBe(17000);
   });
 
   it.each([
+    { captchaScreen: '#challenge' }, { captchaImage: '#image', captchaInput: '#answer' },
+    { captchaScreen: '#challenge', captchaImage: '#image' },
+    { captchaScreen: '#challenge', captchaInput: '#answer' },
+    { ...captcha, captchaScreen: undefined }, { ...captcha, captchaScreen: '' },
+    { ...captcha, captchaScreen: ' ' }, { ...captcha, captchaScreen: null },
+    { ...captcha, captchaScreen: 42 }, { ...captcha, captchaScreen: '#'.repeat(1025) },
     { captchaImage: '#image' }, { captchaInput: '#answer' }, { captchaSubmit: '#submit' },
     { captchaSuccess: '#success' }, { captchaLength: '6' }, { captchaAlphabet: 'digits' },
     { captchaMinConfidence: '0.9' }, { captchaTimeoutMs: '15000' },
@@ -126,14 +134,23 @@ describe('CAPTCHA CLI plan boundary', () => {
     expect(plan.verification.timeoutMs).toBe(expected);
   });
 
-  it('rejects a CAPTCHA flag missing its argument in the actual parser', async () => {
+  it('preserves the exact explicit screen selector', async () => {
+    // Given
+    const captchaScreen = 'main > section[data-challenge="text"]';
+    // When
+    const plan = await commandPlan(engine, { ...input, ...captcha, captchaScreen });
+    // Then
+    expect(plan.captcha?.screenSelector).toBe(captchaScreen);
+  });
+
+  it.each(['--captcha-screen', '--captcha-image'])('rejects %s missing its argument in the actual parser', async flag => {
     // Given
     const program = createCli().exitOverride().configureOutput({ writeErr: () => undefined });
     for (const command of program.commands)
       command.exitOverride().configureOutput({ writeErr: () => undefined });
     // When / Then
     await expect(program.parseAsync(['--watch', '--approved-url', input.approvedUrl,
-      '--action', 'click', '--when', 'enabled', '--captcha-image'], { from: 'user' }))
+      '--action', 'click', '--when', 'enabled', flag], { from: 'user' }))
       .rejects.toMatchObject({ code: 'commander.optionMissingArgument' });
   });
 });

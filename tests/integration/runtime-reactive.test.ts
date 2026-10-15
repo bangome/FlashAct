@@ -125,6 +125,12 @@ test("does not match the wrong specified value", async ({ page }) => {
 test("waits for a CAPTCHA using events and expiry rather than a readiness interval", async ({ page }) => {
   // Given: freeze the browser epoch so the only deadline has an exact duration.
   const epoch = 1_800_000_000_000;
+  await page.locator("#action").evaluate(element => {
+    const screen = document.createElement("section");
+    screen.id = "challenge";
+    element.before(screen);
+    screen.append(element, Object.assign(document.createElement("input"), { id: "answer" }));
+  });
   await page.evaluate(`Date.now=()=>${epoch};
     document.querySelector('#action').hidden=true;
     window.captchaWaitTimers=[];
@@ -133,7 +139,7 @@ test("waits for a CAPTCHA using events and expiry rather than a readiness interv
       captchaWaitTimers.push(delay);return nativeTimeout(handler,delay,...args);
     };`);
   await install(page, plan({ action: { type: "captcha" }, expiresAt: epoch + 60000,
-    captcha: { imageSelector: "#action", inputSelector: "#answer", alphabet: "digits",
+    captcha: { screenSelector: "#challenge", imageSelector: "#action", inputSelector: "#answer", alphabet: "digits",
       length: 6, minConfidence: 0.8, timeoutMs: 15000 } }));
   expect((await arm(page)).state).toBe("WAITING");
   const delays: unknown = await page.evaluate("captchaWaitTimers");

@@ -3,8 +3,10 @@
 Single-shot browser DOM clicks triggered by a scheduled instant, an element condition, or a combination of conditions. FlashAct is a Node.js 22 / npm project, not a browser extension, daemon, or guaranteed reservation service.
 
 Text-image CAPTCHA waiting can be armed independently with `--watch --action
-captcha --when appear --captcha-image <css> --captcha-input <css>`. Local macOS
-Vision OCR prepares before waiting, then fills once when the image is ready;
+captcha --when appear --captcha-screen <css> --captcha-image <css> --captcha-input <css>`. Local macOS
+Vision OCR prepares before waiting, then reads only after the explicitly identified
+CAPTCHA screen and its contained image/input are ready. A click or ordinary form
+does not trigger recognition. It then fills once;
 no opener or image click is required. The post-click companion remains supported.
 Explicitly configured submission requires success verification. This is not
 general screen understanding; see

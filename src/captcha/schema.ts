@@ -3,6 +3,7 @@ import type { CaptchaPlan, CaptchaStatus } from "./types.js";
 
 const selector = z.string().min(1).max(1024).regex(/\S/);
 export const captchaPlanSchema = z.strictObject({
+  screenSelector: selector,
   imageSelector: selector,
   inputSelector: selector,
   submitSelector: selector.exactOptional(),

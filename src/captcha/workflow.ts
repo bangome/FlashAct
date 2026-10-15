@@ -70,6 +70,12 @@ export class CaptchaTask {
       throw new FlashActError("INVALID_RESPONSE", "Captcha capture is not a bounded PNG");
     return image;
   }
+  private async ready(region: CaptureRegion): Promise<boolean> {
+    this.active();
+    const current = viewSchema.parse(await this.evaluate(captchaReadExpression(this.key)));
+    this.active();
+    return current.state === "ready" && JSON.stringify(current.region) === JSON.stringify(region);
+  }
   async run(): Promise<void> {
     const config = this.plan.captcha;
     if (!config) throw new FlashActError("INVALID_PLAN", "Missing captcha configuration");
@@ -85,11 +91,18 @@ export class CaptchaTask {
       }
       await this.eligible();
       this.active();
+      if (!await this.ready(current.region)) {
+        this.emit({ state: "FAILED", error: "CHALLENGE_CHANGED" }); return;
+      }
       this.started = performance.now();
       this.emit({ state: "CAPTURING" });
       let stage = performance.now();
       const image = await this.capture(current.region);
-      this.emit({ state: "RECOGNIZING", timing: { captureMs: performance.now() - stage } });
+      const captureMs = performance.now() - stage;
+      if (!await this.ready(current.region)) {
+        this.emit({ state: "FAILED", error: "CHALLENGE_CHANGED" }); return;
+      }
+      this.emit({ state: "RECOGNIZING", timing: { captureMs } });
       stage = performance.now();
       const recognized = await this.recognizer.recognize(image, this.controller.signal);
       this.active();
@@ -100,8 +113,7 @@ export class CaptchaTask {
       const alphabet = config.alphabet === "digits" ? /^[0-9]+$/ : config.alphabet === "uppercase-alphanumeric"
         ? /^[A-Z0-9]+$/ : /^[A-Za-z0-9]+$/;
       if (text.length !== config.length || !alphabet.test(text)) { this.emit({ state: "FAILED", error: "INVALID_TEXT" }); return; }
-      const check = viewSchema.parse(await this.evaluate(captchaReadExpression(this.key)));
-      if (check.state !== "ready" || JSON.stringify(check.region) !== JSON.stringify(current.region)) {
+      if (!await this.ready(current.region)) {
         this.emit({ state: "FAILED", error: "CHALLENGE_CHANGED" }); return;
       }
       const fresh = await this.capture(current.region);

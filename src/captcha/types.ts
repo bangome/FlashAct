@@ -1,4 +1,5 @@
 export type CaptchaPlan = {
+  readonly screenSelector: string;
   readonly imageSelector: string;
   readonly inputSelector: string;
   readonly submitSelector?: string;

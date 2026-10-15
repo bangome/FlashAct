@@ -238,6 +238,14 @@ readiness polling. No opener or image click is synthesized. Existing
 create/validate/arm/cancel/status APIs own the same workflow and resources.
 
 On click actions, optional `ExecutionPlan.captcha` configures the post-click workflow.
+Both modes require `captcha.screenSelector`, an explicitly identified active
+CAPTCHA container. It must be unique, visible/enabled, not body/html, and contain
+the configured image, input and optional submit. An original click or arbitrary
+image/input pair does not establish CAPTCHA presence. Missing screen configuration
+rejects at parsing; no guessed fallback is supplied for previous plans.
+The processing timeout starts at confirmed-screen/image/input readiness, not at
+click dispatch. Waiting remains bounded by plan expiry and any stricter primary
+verification. A lost/replaced screen prevents input from an outstanding OCR result.
 The original click remains `maxExecutions: 1`; host-owned `JobStatus.captcha`
 records input and explicit optional submission separately, each bounded to one.
 Original `VERIFIED` never implies CAPTCHA verification. Submit requires an
